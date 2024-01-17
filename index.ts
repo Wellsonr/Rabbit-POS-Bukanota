@@ -34,7 +34,7 @@ interface MysqlInfo {
 }
 
 const mqHost = process.env.AMQP_URL || 'localhost'
-amqp.connect(`amqp://admin:indonesiaraya@${mqHost}`)
+amqp.connect(`amqp://bukanota_admin:TXsrHHFpy95ISjvw@${mqHost}`)
   .then(conn => {
     return conn.createChannel().then(ch => {
       ch.prefetch(1);

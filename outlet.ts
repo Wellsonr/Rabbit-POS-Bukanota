@@ -1605,7 +1605,7 @@ const prosesERPSync = (mysqlConfig: MysqlInfo) => {
       listCheck.push(
         new Promise((resolveCheckOrderan, rejectCheckOrderan) => {
           myconn.query('SHOW FIELDS FROM tblorderan WHERE `Field` = \'kodeorderan\';', (err, results) => {
-            console.log("results", results)
+            console.log("results", results, mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname)
             if (err) return rejectCheckOrderan(err);
             if (results && results.length > 0) {
               const [result] = results;

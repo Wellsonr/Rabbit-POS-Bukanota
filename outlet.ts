@@ -2534,7 +2534,7 @@ const processOutlet = (headofficecode: string, database: string, kodeoutlet: str
           }).filter(el => el.tipe === "session")
           if (listSession.length > 0) {
             try {
-              await processSession(listSession, kodeoutlet);
+              await processSessionERP(mysql, listSession, kodeoutlet);
             } catch (err) {
               console.log(err)
               cdb.close()
@@ -2549,7 +2549,7 @@ const processOutlet = (headofficecode: string, database: string, kodeoutlet: str
           }).filter(el => el.tipe === "transkasmasuk")
           if (listKasMasuk.length > 0) {
             try {
-              await processKasMasuk(listKasMasuk, kodeoutlet);
+              await processKasMasukERP(mysql, listKasMasuk, kodeoutlet);
             } catch (err) {
               console.log(err)
               cdb.close()
@@ -2564,7 +2564,7 @@ const processOutlet = (headofficecode: string, database: string, kodeoutlet: str
           }).filter(el => el.tipe === "transkaskeluar")
           if (listKasKeluar.length > 0) {
             try {
-              await processKasKeluar(listKasKeluar, kodeoutlet);
+              await processKasKeluarERP(mysql, listKasKeluar, kodeoutlet);
             } catch (err) {
               console.log(err)
               cdb.close()

@@ -553,8 +553,29 @@ const hapusPreviousTrans = (conn: Connection, kodeoutlet: string, idtrans: strin
     })
   })
 }
-
-const processOrderan = (conn: Connection, kodeoutlet: string, idtrans: string, noinvoice: string, tanggal: string, nomeja: string, namacustomer: string, keterangan: string, userin: string, userupt: string, jamin: string, jamupt: string, lastJamBayar: string | null, statusid: number, displayHarga: string, cover: number, voidReason: string, userRetur: string, useDelivery: boolean, member: {
+const hapusPreviousTransERP = (myconn: Connection, kodeoutlet: string, idtrans: string[]) => {
+  return new Promise<void>((resolve, reject) => {
+    const banyakTrans = idtrans.length
+    const jumlahLoop = Math.ceil(banyakTrans / 1000)
+    const listPromise = []
+    for (let i = 0; i < jumlahLoop; i++) {
+      const split = idtrans.slice((i * 1000), (i * 1000) + 999)
+      // console.log("HASIL SPLIT", i, split)
+      listPromise.push(new Promise<void>((resolve, reject) => {
+        myconn.query("DELETE FROM pos_orderan WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanco WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderancod WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderancodpaket WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderand WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderandpaket WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpayment WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpaymentdetail WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpaymentitem WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split], (err) => {
+          if (err) return (reject(err))
+          return resolve()
+        })
+      }))
+    }
+    Promise.all(listPromise).then(() => {
+      return resolve()
+    }).catch(err => {
+      return reject(err)
+    })
+  })
+}
+const processOrderanERP = (myconn: Connection, kodeoutlet: string, idtrans: string, noinvoice: string, tanggal: string, nomeja: string, namacustomer: string, keterangan: string, userin: string, userupt: string, jamin: string, jamupt: string, lastJamBayar: string | null, statusid: number, displayHarga: string, cover: number, voidReason: string, userRetur: string, useDelivery: boolean, member: {
   nama?: string
   alamat?: string
   nohandphone?: string
@@ -566,7 +587,7 @@ const processOrderan = (conn: Connection, kodeoutlet: string, idtrans: string, n
     const memberAddress = member ? member.alamat : undefined
     const memberPhone = member ? member.nohandphone : undefined
     const memberZona = member ? member.zona : undefined
-    conn.query("INSERT INTO tblorderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona], (err) => {
+    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona], (err) => {
       if (err) return reject(err)
       return resolve()
     })
@@ -654,6 +675,118 @@ const processCaptainOrder = (conn: Connection, kodeoutlet: string, captainOrder:
                         const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         conn.query("INSERT INTO tblorderancodpaket (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, kodepaket) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, el2.index, true, false, el2.kodebarang, el2.namabarang, kodepaket], (err => {
+                          if (err) return reject(err)
+                          return resolve()
+                        }))
+                      })
+                    })
+                    Promise.all<void>(topping).then(() => resolve())
+                  } else return (resolve())
+                })
+              })
+            })
+            Promise.all<void>([
+              ...listDetail,
+              ...listPaket
+            ]).then(() => {
+              return (resolve())
+            }).catch(err => {
+              return (reject(err))
+            })
+          })
+        })
+      })
+      Promise.all<void>(CO).then(() => {
+        return (resolve())
+      }).catch(err => {
+        return (reject(err))
+      })
+    } else {
+      return resolve();
+    }
+  })
+}
+const processCaptainOrderERP = (myconn: Connection, kodeoutlet: string, captainOrder: CaptainOrder[], idtrans: string, noinvoice: string, detail: TransaksiDetail[], listSubkategori: SubKategori[], listBarang: Barang[], listTopping: Topping[]) => {
+  return new Promise<void>((resolve, reject) => {
+    if (captainOrder) {
+      const CO = captainOrder.map((el, index) => {
+        return new Promise<void>((resolve, reject) => {
+          myconn.query("INSERT INTO pos_orderanco (kodeoutlet,idtrans,noinvoice, urutco, kodewaiter, userin, jamin) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, el.kodewaiter, el.userin, moment(el.jamin).format("YYYY-MM-DD HH:mm:ss")], (err) => {
+            if (err) return (reject(err))
+            const listDetail = el.item.map(el2 => {
+              return new Promise<void>((resolve, reject) => {
+                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
+                const dataBarang = detail.find(el => el.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+                const harga = dataBarang && dataBarang.harga ? dataBarang.harga : 0;
+                const discountPercent = dataBarang && dataBarang.discountPercent ? dataBarang.discountPercent : 0;
+                const jumlah = (el2.qty * harga) * (100 - discountPercent) / 100
+                const isPaket = el2.detail && el2.detail.length > 0
+                const isVariant = el2.isVariant || false
+                myconn.query("INSERT INTO pos_orderancod (kodeoutlet,idtrans, noinvoice, urutco, kodebarang,namabarang,qty,harga,discountPercent,jumlah, kodesubkategori, namasubkategori,isPaket, `index`, isTopping, isVariant) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?)", [kodeoutlet, idtrans, noinvoice, index + 1, el2.kodebarang, el2.namabarang, el2.qty, harga, discountPercent, jumlah, kodesubkategori, namasubkategori, isPaket, el2.index, isVariant], (err) => {
+                  if (err) return (reject(err))
+                  const listOrderTopping = el2.listOrderTopping || []
+                  if (listOrderTopping.length > 0) {
+                    const topping = listOrderTopping.map(top => {
+                      return new Promise<void>((resolve, reject) => {
+                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
+                        myconn.query("INSERT INTO pos_orderancod (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,isPaket,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, 0, el2.index, true, false, el2.kodebarang, el2.namabarang], (err => {
+                          if (err) return reject(err)
+                          return resolve()
+                        }))
+                      })
+                    })
+                    Promise.all<void>(topping).then(() => resolve())
+                  } else return (resolve())
+                })
+              })
+            })
+            let listItemPaket = []
+            for (let i = 0, j = el.item.length; i < j; i++) {
+              if (el.item[i].detail) {
+                listItemPaket = [
+                  ...listItemPaket,
+                  ...el.item[i].detail.map(el3 => {
+                    return {
+                      ...el3,
+                      kodepaket: el.item[i].kodebarang
+                    }
+                  })
+                ]
+              } else {
+                listItemPaket = [
+                  ...listItemPaket,
+                  el.item[i]
+                ]
+              }
+            }
+            const listPaket = listItemPaket.map(el2 => {
+              return new Promise<void>((resolve, reject) => {
+                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
+                const dataBarang = detail.find(el => el.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+                const harga = dataBarang && dataBarang.harga ? dataBarang.harga : 0;
+                const discountPercent = dataBarang && dataBarang.discountPercent ? dataBarang.discountPercent : 0;
+                const jumlah = (el2.qty * harga) * (100 - discountPercent) / 100
+                const kodepaket = el2.kodepaket ? el2.kodepaket : null
+                myconn.query("INSERT INTO pos_orderancodpaket (kodeoutlet,idtrans, noinvoice, urutco, kodebarang,namabarang,qty,harga,discountPercent,jumlah,kodesubkategori,namasubkategori,kodepaket) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, el2.kodebarang, el2.namabarang, el2.qty, harga, discountPercent, jumlah, kodesubkategori, namasubkategori, kodepaket], (err) => {
+                  if (err) return (reject(err))
+                  const listOrderTopping = el2.listOrderTopping || []
+                  if (listOrderTopping.length > 0) {
+                    const topping = listOrderTopping.map(top => {
+                      return new Promise<void>((resolve, reject) => {
+                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
+                        myconn.query("INSERT INTO pos_orderancodpaket (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, kodepaket) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, el2.index, true, false, el2.kodebarang, el2.namabarang, kodepaket], (err => {
                           if (err) return reject(err)
                           return resolve()
                         }))
@@ -795,6 +928,114 @@ const processItem = (conn: Connection, kodeoutlet: string, detail: TransaksiDeta
   })
 }
 
+const processItemERP = (conn: Connection, kodeoutlet: string, detail: TransaksiDetail[], idtrans: string, noinvoice: string, listKategori: Kategori[], listSubkategori: SubKategori[], listBarang: Barang[], listTopping: Topping[]) => {
+  return new Promise<void>((resolve, reject) => {
+    if (detail) {
+      const item = detail.map(el => {
+        return new Promise<void>((resolve, reject) => {
+          const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang.toUpperCase()).indexOf(el.kodebarang.toUpperCase()) > -1)
+          const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
+          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+          const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
+          const kodesubkategori = el.kodesubkatgori ? el.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
+          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+          const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
+          const isPaket = el.detail && el.detail.length > 0 || false
+          const isPromo = el.isPromo != null ? el.isPromo : false
+          const isVariant = el.isVariant || false
+          const qtyVoid = el.qtyVoid != null ? el.qtyVoid : 0;
+          conn.query("INSERT INTO pos_orderand (kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang, namabarang, qty, discountPercent, discountAmount, harga, jumlah, isPaket, isPromo, `index`, isVariant, isTopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE,?)", [kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, el.kodebarang, el.namabarang, el.qty, el.discountPercent, el.discountAmount, el.harga, el.jumlah, isPaket, isPromo, el.index, isVariant, qtyVoid], (err) => {
+            if (err) return reject(err)
+            const listOrderTopping = el.listOrderTopping || [];
+            if (listOrderTopping.length > 0) {
+              const topping = listOrderTopping.map(top => {
+                return new Promise<void>((resolve, reject) => {
+                  const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                  const kodekategoritop = topping && topping.kodekategori ? topping.kodekategori : null
+                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategoritop.toUpperCase()) : null
+                  const namakategoritop = kategoritop && kategoritop.namakategori ? kategoritop.namakategori : null
+                  const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
+                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                  const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
+                  conn.query("INSERT INTO pos_orderand (kodeoutlet,idtrans,noinvoice,kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang,namabarang,qty,discountPercent, discountAmount, harga, jumlah,isPaket,isPromo,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategoritop, namakategoritop, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el.qty, 0, 0, top.harga, (el.qty * top.qty) * top.harga, 0, 0, el.index, true, false, el.kodebarang, el.namabarang, top.qty * qtyVoid], (err => {
+                    if (err) return reject(err)
+                    return resolve()
+                  }))
+                })
+              })
+              Promise.all<void>(topping).then(() => resolve())
+            } else return (resolve())
+          })
+        })
+      })
+      let listItemPaket = []
+      for (let i = 0, j = detail.length; i < j; i++) {
+        if (detail[i].detail) {
+          listItemPaket = [
+            ...listItemPaket,
+            ...detail[i].detail.map(el2 => {
+              return {
+                ...el2,
+                kodepaket: detail[i].kodebarang,
+                isPromo: detail[i].isPromo
+              }
+            })
+          ]
+        } else {
+          listItemPaket = [
+            ...listItemPaket,
+            detail[i]
+          ]
+        }
+      }
+      const listPaket = listItemPaket.map(el => {
+        return new Promise<void>((resolve, reject) => {
+          const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang.toUpperCase()).indexOf(el.kodebarang.toUpperCase()) > -1)
+          const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
+          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+          const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
+          const kodesubkategori = el.kodesubkatgori ? el.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
+          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+          const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
+          const kodepaket = el.kodepaket ? el.kodepaket : null
+          const isPromo = el.isPromo != null ? el.isPromo : false
+          const isVariant = el.isVariant != null ? el.isVariant : false
+          const qtyVoid = el.qtyVoid != null ? el.qtyVoid : 0;
+          conn.query("INSERT INTO pos_orderandpaket (kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang, namabarang, qty, discountPercent, discountAmount, harga, jumlah, kodepaket, isPromo, `index`, isVariant, isTopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE,?)", [kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, el.kodebarang, el.namabarang, el.qty, el.discountPercent, el.discountAmount, el.harga, el.jumlah, kodepaket, isPromo, el.index, isVariant, qtyVoid], (err) => {
+            if (err) return reject(err)
+            const listOrderTopping = el.listOrderTopping || []
+            if (listOrderTopping.length > 0) {
+              const topping = listOrderTopping.map(top => {
+                return new Promise<void>((resolve, reject) => {
+                  const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                  const kodekategoritop = topping && topping.kodekategori ? topping.kodekategori : null
+                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategoritop.toUpperCase()) : null
+                  const namakategoritop = kategoritop && kategoritop.namakategori ? kategoritop.namakategori : null
+                  const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
+                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                  const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
+                  conn.query("INSERT INTO pos_orderandpaket (kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang, namabarang, qty, discountPercent, discountAmount, harga, jumlah, kodepaket, isPromo, `index`, isVariant, isTopping,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategoritop, namakategoritop, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el.qty, 0, 0, top.harga, (el.qty * top.qty) * top.harga, kodepaket, 0, el.index, false, true, el.kodebarang, el.namabarang, top.qty * qtyVoid], (err => {
+                    if (err) return reject(err)
+                    return resolve()
+                  }))
+                })
+              })
+              Promise.all<void>(topping).then(() => resolve())
+            } else return (resolve())
+          })
+        })
+      })
+      Promise.all<void>([
+        ...item,
+        ...listPaket
+      ]).then(() => {
+        resolve()
+      }).catch(reject)
+    } else {
+      return resolve()
+    }
+  })
+}
 const processPayment = (conn: Connection, kodeoutlet: string, payment: TransaksiPayment[], idtrans: string, noinvoice: string, listPayment: PaymentOutlet[], listBarang: Barang[], listSubkategori: SubKategori[], listTopping: Topping[]) => {
   return new Promise<void>((resolve, reject) => {
     if (payment) {
@@ -862,6 +1103,74 @@ const processPayment = (conn: Connection, kodeoutlet: string, payment: Transaksi
     }
   })
 }
+const processPaymentERP = (myconn: Connection, kodeoutlet: string, payment: TransaksiPayment[], idtrans: string, noinvoice: string, listPayment: PaymentOutlet[], listBarang: Barang[], listSubkategori: SubKategori[], listTopping: Topping[]) => {
+  return new Promise<void>((resolve, reject) => {
+    if (payment) {
+      const hasil = payment.map((el, index) => {
+        return new Promise<void>((resolve, reject) => {
+          const promoAmount = el.promoAmount != null ? el.promoAmount : 0
+          myconn.query("INSERT INTO pos_orderanpayment (kodeoutlet,idtrans,noinvoice, urutpayment, subtotal, discountAmount, discountPercent, serviceAmount, servicePercent, taxAmount, taxPercent, total, pembulatan, kembalian, totalPayment, userin, jamin, sessionId,promoAmount, kodePromo,namaPromo,ongkir) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, el.subtotal, el.discountAmount, el.discountPercent, el.serviceAmount, el.servicePercent, el.taxAmount, el.taxPercent, el.total, el.pembulatan, el.kembalian, el.totalPayment, el.userin, moment(el.jamin).format("YYYY-MM-DD HH:mm:ss"), el.sessionId, promoAmount, el.kodePromo, el.namaPromo, el.ongkir], err => {
+            if (err) return reject(err)
+            const paymentItem = el.item.map(el2 => {
+              return new Promise<void>((resolve, reject) => {
+                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
+                const isPromo = el2.isPromo != null ? el2.isPromo : false
+                const isVariant = el2.isVariant != null ? el2.isVariant : false
+                const qtyVoid = el2.qtyVoid != null ? el2.qtyVoid : 0;
+                myconn.query("INSERT INTO pos_orderanpaymentitem (kodeoutlet,idtrans,noinvoice,urutpayment,kodesubkategori, namasubkategori, kodebarang,namabarang,qty,discountPercent,discountAmount,harga,jumlah,isPromo,`index`, isTopping,isVariant, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,FALSE,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, kodesubkategori, namasubkategori, el2.kodebarang, el2.namabarang, el2.qty, el2.discountPercent, el2.discountAmount, el2.harga, el2.jumlah, isPromo, el2.index, isVariant, qtyVoid], err => {
+                  if (err) return reject(err)
+                  const listOrderTopping = el2.listOrderTopping || []
+                  if (listOrderTopping.length > 0) {
+                    const topping = listOrderTopping.map(top => {
+                      return new Promise<void>((resolve, reject) => {
+                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
+                        myconn.query("INSERT INTO pos_orderanpaymentitem (kodeoutlet,idtrans,noinvoice,urutpayment,kodesubkategori,namasubkategori,kodebarang,namabarang,qty,discountPercent,discountAmount,harga,jumlah,isPromo,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el2.qty, 0, 0, top.harga, (el2.qty * top.qty) * top.harga, 0, el2.index, true, false, el2.kodebarang, el2.namabarang, top.qty * qtyVoid], (err) => {
+                          if (err) return reject(err)
+                          return resolve()
+                        })
+                      })
+                    })
+                    Promise.all<void>(topping).then(() => resolve())
+                  } else return (resolve())
+                })
+              })
+            })
+            const paymentDetail = el.payment.map((el2) => {
+              return new Promise<void>((resolve, reject) => {
+                const payment = listPayment.find(el3 => el3.kodepayment.toUpperCase() === el2.kodepayment.toUpperCase())
+                const isCard = payment && payment.isCard ? payment.isCard : false
+                const isCashlez = payment && payment.isCashlez ? payment.isCashlez : false
+                const isQREN = payment && payment.isQREN ? payment.isQREN : false
+                myconn.query("INSERT INTO pos_orderanpaymentdetail (kodeoutlet,idtrans,noinvoice,urutpayment,kodepayment,namapayment,remark,amount,nomorKartu, transRef,isCard,isCashlez,isQREN) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, el2.kodepayment, el2.namapayment, el2.remark, el2.amount, el2.nomorKartu, el2.transRef, isCard, isCashlez, isQREN], err => {
+                  if (err) return reject(err)
+                  return resolve()
+                })
+              })
+            })
+            Promise.all<void>([
+              ...paymentItem,
+              ...paymentDetail
+            ]).then(() => {
+              return resolve()
+            }).catch(reject)
+          })
+        })
+      })
+      Promise.all<void>(hasil).then(() => {
+        return (resolve())
+      }).catch(reject)
+    } else {
+      return resolve()
+    }
+  })
+}
+
 
 const convertPhone = (val: string) => {
   let handphone = val
@@ -1076,22 +1385,153 @@ const cekDetail = (cdb: any, conn: Connection, kodeoutlet: string, transaksi: Tr
       .catch(err => reject(err));
   });
 }
+const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi: Transaksi): Promise<Transaksi> => {
+  return new Promise((resolve, reject) => {
+    new Promise<Transaksi>((resolveBalance, rejectBalance) => {
+      if (transaksi.statusid === 20 || transaksi.statusid === 9) {
+        const jumlahDetail = transaksi.detail.map(el => el.jumlah).reduce((a, b) => a + b, 0);
+        const jumlahPayment = transaksi.payment.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
+        if (jumlahDetail !== jumlahPayment) {
+          let listItem: TransaksiDetail[] = [];
+          for (let i = 0, j = transaksi.payment.length; i < j; i++) {
+            for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
+              const { kodebarang, index, qty, jumlah, discountAmount } = transaksi.payment[i].item[k];
+              const found = listItem.find(el => el.kodebarang.toUpperCase() === kodebarang.toUpperCase() && el.index === index);
+              if (found) {
+                listItem = listItem.map(el => {
+                  if (el.kodebarang.toUpperCase() === kodebarang.toUpperCase() && el.index === index) {
+                    return {
+                      ...el,
+                      qty: el.qty + qty,
+                      discountAmount: el.discountAmount + discountAmount,
+                      jumlah: el.jumlah + jumlah,
+                    }
+                  } else {
+                    return el;
+                  }
+                });
+              } else {
+                listItem.push(transaksi.payment[i].item[k]);
+              }
+            }
+          }
+          const detailBackup = [...transaksi.detail];
+          if (transaksi._id.match(/^retur-/g)) {
+            const newUpdate = {
+              ...transaksi,
+              detailBackup,
+              detail: listItem,
+            };
+            //update
+            cdb.put(newUpdate)
+              .then(() => {
+                return resolveBalance(newUpdate);
+              }).catch(rejectBalance);
+          } else {
+            const captainOrderBackup = [...transaksi.captainOrder || []];
+            const listCaptainOrder: CaptainOrder[] = [];
+            if (transaksi.captainOrder[0].item.length === listItem.length) {
+              listCaptainOrder.push(transaksi.captainOrder[0]);
+            } else {
+              //check 1 per 1
+              conn.query('INSERT INTO pos_dataproblem (kodeoutlet, notrans, tanggal) VALUES (?,?,?)', [kodeoutlet, transaksi._id, moment(transaksi.tanggal).format("YYYY-MM-DD HH:mm:ss")], (err) => {
+                if (err) {
+                  return rejectBalance(err);
+                }
+                return resolveBalance(transaksi);
+              });
+            }
+            const newUpdate = {
+              ...transaksi,
+              detailBackup,
+              detail: listItem,
+              captainOrderBackup,
+              captainOrder: listCaptainOrder,
+            };
+            //update
+            cdb.put(newUpdate)
+              .then(() => {
+                return resolveBalance(newUpdate);
+              }).catch(rejectBalance);
+          }
+        } else {
+          return resolveBalance(transaksi);
+        }
+      } else {
+        return resolveBalance(transaksi);
+      }
+    })
+      .then(newTransaksi => new Promise<Transaksi>((resolvePayment, rejectPayment) => {
+        let isChanged = false;
+        const prosesCekPayment = i => {
+          if (!isNumeric(newTransaksi.payment[i].total)) {
+            isChanged = true;
+            const subTotalDiscount = newTransaksi.payment[i].subtotal - newTransaksi.payment[i].discountAmount;
+            newTransaksi.payment[i].serviceAmount = 0;
+            newTransaksi.payment[i].servicePercent = 0;
+            newTransaksi.payment[i].taxAmount = 0;
+            newTransaksi.payment[i].taxPercent = 0;
+            newTransaksi.payment[i].total = subTotalDiscount;
+            newTransaksi.payment[i].payment[i].amount = subTotalDiscount;
+            newTransaksi.payment[i].pembulatan = 0;
+            newTransaksi.payment[i].kembalian = 0;
+            newTransaksi.payment[i].totalPayment = subTotalDiscount;
+            newTransaksi.payment[i].isPaymentError = true;
+            if (i < newTransaksi.payment.length - 1) {
+              i++;
+              prosesCekPayment(i);
+            } else {
+              if (isChanged) {
+                cdb
+                  .put(newTransaksi)
+                  .then(() => resolvePayment(newTransaksi))
+                  .catch(rejectPayment);
+              } else {
+                return resolvePayment(newTransaksi);
+              }
+            }
+          } else {
+            if (i < newTransaksi.payment.length - 1) {
+              i++;
+              prosesCekPayment(i);
+            } else {
+              if (isChanged) {
+                cdb
+                  .put(newTransaksi)
+                  .then(() => resolvePayment(newTransaksi))
+                  .catch(rejectPayment);
+              } else {
+                return resolvePayment(newTransaksi);
+              }
+            }
+          }
+        }
+        if (newTransaksi.statusid === 20 || transaksi.statusid === 9) {
+          if (newTransaksi.payment.length > 0) {
+            prosesCekPayment(0);
+          } else {
+            return resolvePayment(newTransaksi);
+          }
+        } else {
+          return resolvePayment(newTransaksi);
+        }
+      }))
+      .then(newTransaksi => resolve(newTransaksi))
+      .catch(err => reject(err));
+  });
+}
 
-const processTransaksi = (listTransaksi: Transaksi[], kodeoutlet: string, listKategori: Kategori[], listSubkategori: SubKategori[], listBarang: Barang[], listPayment: PaymentOutlet[], listTopping: Topping[], cdb: any) => {
+const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[], kodeoutlet: string, listKategori: Kategori[], listSubkategori: SubKategori[], listBarang: Barang[], listPayment: PaymentOutlet[], listTopping: Topping[], cdb: any) => {
   return new Promise<void>((resolve, reject) => {
     if (listTransaksi.length > 0) {
-      db.getConnection((err, conn) => {
-        if (err) {
-          conn.release()
-          return reject(err)
-        }
-        conn.beginTransaction((err) => {
+      const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
+        myconn.beginTransaction((err) => {
           if (err) {
-            conn.release()
+            myconn.end()
             return reject(err)
           }
-          conn.config.timeout = 0
-          hapusPreviousTrans(conn, kodeoutlet, listTransaksi.map(el => el._id)).then(() => {
+          myconn.config.timeout = 0
+          hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id)).then(() => {
             const banyakTrans = listTransaksi.length
             const jumlahLoop = Math.ceil(banyakTrans / 1000)
             const listPromise = []
@@ -1100,14 +1540,14 @@ const processTransaksi = (listTransaksi: Transaksi[], kodeoutlet: string, listKa
               listPromise.push(new Promise<void>((resolve, reject) => {
                 const hasilProcess = split.map(item => {
                   return new Promise<void>((resolve, reject) => {
-                    cekDetail(cdb, conn, kodeoutlet, item).then(el => {
+                    cekDetailERP(cdb, myconn, kodeoutlet, item).then(el => {
                       const idtrans = el._id
-                      processOrderan(conn, kodeoutlet, idtrans, el.noinvoice, el.tanggal, el.nomeja, el.namacustomer, el.keterangan, el.userin, el.userupt, el.jamin, el.jamupt, el.lastJamBayar, el.statusid, el.displayHarga, el.cover, el.voidReason, el.userRetur, el.useDelivery, el.member).then(() => {
-                        return processCaptainOrder(conn, kodeoutlet, el.captainOrder, idtrans, el.noinvoice, el.detail, listSubkategori, listBarang, listTopping)
+                      processOrderanERP(myconn, kodeoutlet, idtrans, el.noinvoice, el.tanggal, el.nomeja, el.namacustomer, el.keterangan, el.userin, el.userupt, el.jamin, el.jamupt, el.lastJamBayar, el.statusid, el.displayHarga, el.cover, el.voidReason, el.userRetur, el.useDelivery, el.member).then(() => {
+                        return processCaptainOrderERP(myconn, kodeoutlet, el.captainOrder, idtrans, el.noinvoice, el.detail, listSubkategori, listBarang, listTopping)
                       }).then(() => {
-                        return processItem(conn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listSubkategori, listBarang, listTopping)
+                        return processItemERP(myconn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listSubkategori, listBarang, listTopping)
                       }).then(() => {
-                        return processPayment(conn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
+                        return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
                       }).then(() => {
                         return resolve();
                       }).catch(err => {
@@ -1130,26 +1570,33 @@ const processTransaksi = (listTransaksi: Transaksi[], kodeoutlet: string, listKa
             console.log("PROCESS MEMBER")
             return processMember(listTransaksi.map(el => el.member), cdb)
           }).then(() => {
-            conn.commit(() => {
-              conn.release();
+            myconn.commit(() => {
+              myconn.end();
               return resolve()
             })
           }).catch(err => {
             console.log(err);
-            conn.rollback(() => {
-              conn.release();
+            myconn.rollback(() => {
+              myconn.end();
               return reject(err)
             })
           })
         })
-      })
+    
     } else return resolve();
   })
 }
-
 const hapusPreviousSession = (conn: Connection, kodeoutlet: string, listSession: string[]) => {
   return new Promise<void>((resolve, reject) => {
     conn.query("DELETE FROM tblsession WHERE kodeoutlet = ? AND sessionId IN (?)", [kodeoutlet, listSession], (err) => {
+      if (err) return reject(err)
+      return resolve();
+    })
+  })
+}
+const hapusPreviousSessionERP = (conn: Connection, kodeoutlet: string, listSession: string[]) => {
+  return new Promise<void>((resolve, reject) => {
+    conn.query("DELETE FROM pos_session WHERE kodeoutlet = ? AND sessionId IN (?)", [kodeoutlet, listSession], (err) => {
       if (err) return reject(err)
       return resolve();
     })
@@ -1190,12 +1637,58 @@ const processSession = (listSession: Session[], kodeoutlet: string) => {
     } else return resolve()
   })
 }
-
+const processSessionERP = (mysqlConfig: MysqlInfo, listSession: Session[], kodeoutlet: string) => {
+  return new Promise<void>((resolve, reject) => {
+    if (listSession.length > 0) {
+      const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
+      myconn.beginTransaction((err) => {
+        if (err) {
+          myconn.end()
+          return reject(err)
+        }
+        hapusPreviousSessionERP(myconn, kodeoutlet, listSession.map(el => el.sessionId)).then(() => {
+            const hasilProcess = listSession.map(el => {
+              return new Promise<void>((resolve, reject) => {
+                myconn.query("INSERT INTO pos_session (kodeoutlet, sessionId, saldoAwal, saldoAkhir, tanggalBuka, tanggalTutup, userBuka, userTutup) VALUES (?,?,?,?,?,?,?,?)", [kodeoutlet, el.sessionId, el.saldoAwal, el.saldoAkhir, moment(el.tanggalBuka).format("YYYY-MM-DD HH:mm:ss"), el.tanggalTutup ? moment(el.tanggalTutup).format("YYYY-MM-DD HH:mm:ss") : undefined, el.userBuka, el.userTutup], (err) => {
+                  if (err) return reject(err)
+                  return resolve()
+                })
+              })
+            })
+            return Promise.all(hasilProcess)
+          }).then(() => {
+            myconn.commit(() => {
+              myconn.end();
+            })
+            return resolve()
+          }).catch(err => {
+            myconn.rollback(() => {
+              myconn.end();
+            })
+            console.log(err)
+            return reject(err)
+          })
+        })
+   
+    } else return resolve()
+  })
+}
 const hapusPreviousKasMasuk = (conn: Connection, kodeoutlet: string, listTrans: string[]) => {
   return new Promise<void>((resolve, reject) => {
     conn.query("DELETE FROM tbltranskasmasuk WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
       if (err) return reject(err)
       conn.query("DELETE FROM tbltranskasmasukd WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
+        if (err) return reject(err)
+        return resolve()
+      })
+    })
+  })
+}
+const hapusPreviousKasMasukERP = (myconn: Connection, kodeoutlet: string, listTrans: string[]) => {
+  return new Promise<void>((resolve, reject) => {
+    myconn.query("DELETE FROM pos_transkasmasuk WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
+      if (err) return reject(err)
+      myconn.query("DELETE FROM pos_transkasmasukd WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
         if (err) return reject(err)
         return resolve()
       })
@@ -1247,7 +1740,52 @@ const processKasMasuk = (listKasMasuk: TransaksiKas[], kodeoutlet: string) => {
     } else return resolve()
   })
 }
-
+const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[], kodeoutlet: string) => {
+  return new Promise<void>((resolve, reject) => {
+    if (listKasMasuk.length > 0) {
+      const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
+      myconn.beginTransaction((err) => {
+        if (err) {
+          myconn.end()
+          return reject(err)
+        }
+        hapusPreviousKasMasukERP(myconn, kodeoutlet, listKasMasuk.map(el => el._id)).then(() => {
+            const hasilProcess = listKasMasuk.map(el => {
+              return new Promise<void>((resolve, reject) => {
+                const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
+                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined
+                myconn.query("INSERT INTO tbltranskasmasuk (kodeoutlet,idtrans,noinvoice,sessionId,userin,jamin,tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (err) => {
+                  if (err) return reject(err)
+                  const promises = el.detail.map(dt => {
+                    return new Promise<void>((resolve, reject) => {
+                      myconn.query("INSERT INTO tbltranskasmasukd (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (err) => {
+                        if (err) return reject()
+                        else return resolve()
+                      })
+                    })
+                  })
+                  Promise.all<void>(promises).then(() => resolve()).catch(reject)
+                })
+              })
+            })
+            return Promise.all<void>(hasilProcess)
+          }).then(() => {
+            myconn.commit(() => {
+              myconn.end();
+            })
+            return resolve()
+          }).catch(err => {
+            myconn.rollback(() => {
+              myconn.end();
+            })
+            console.log(err)
+            return reject(err)
+          })
+        })
+    
+    } else return resolve()
+  })
+}
 const hapusPreviousKasKeluar = (conn: Connection, kodeoutlet: string, listTrans: string[]) => {
   return new Promise<void>((resolve, reject) => {
     conn.query("DELETE FROM tbltranskaskeluar WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
@@ -1301,6 +1839,52 @@ const processKasKeluar = (listKasKeluar: TransaksiKas[], kodeoutlet: string) => 
           })
         })
       })
+    } else return resolve()
+  })
+}
+const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas[], kodeoutlet: string) => {
+  return new Promise<void>((resolve, reject) => {
+    if (listKasKeluar.length > 0) {
+      const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
+      myconn.beginTransaction((err) => {
+        if (err) {
+          myconn.end()
+          return reject(err)
+        }
+          hapusPreviousKasKeluar(myconn, kodeoutlet, listKasKeluar.map(el => el._id)).then(() => {
+            const hasilProcess = listKasKeluar.map(el => {
+              return new Promise<void>((resolve, reject) => {
+                const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
+                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined
+                myconn.query("INSERT INTO tbltranskaskeluar (kodeoutlet,idtrans,noinvoice,sessionId,userin,jamin,tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (err) => {
+                  if (err) return reject(err)
+                  const promises = el.detail.map(dt => {
+                    return new Promise<void>((resolve, reject) => {
+                      myconn.query("INSERT INTO tbltranskaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (err) => {
+                        if (err) return reject()
+                        else return resolve()
+                      })
+                    })
+                  })
+                  Promise.all<void>(promises).then(() => resolve()).catch(reject)
+                })
+              })
+            })
+            return Promise.all<void>(hasilProcess)
+          }).then(() => {
+            myconn.commit(() => {
+              myconn.end();
+            })
+            return resolve()
+          }).catch(err => {
+            myconn.rollback(() => {
+              myconn.end();
+            })
+            console.log(err)
+            return reject(err)
+          })
+        })
+   
     } else return resolve()
   })
 }
@@ -1886,7 +2470,7 @@ const processOutlet = (headofficecode: string, database: string, kodeoutlet: str
           }).filter(el => el.tipe === "transaksi")
           if (listTransaksi.length > 0) {
             try {
-              await processTransaksi(listTransaksi, kodeoutlet, listKategori, listSubkategori, listBarang, listDataPayment, listTopping, cdb)
+              await processTransaksiERP(mysql, listTransaksi, kodeoutlet, listKategori, listSubkategori, listBarang, listDataPayment, listTopping, cdb)
             } catch (err) {
               console.log(err)
               cdb.close()
@@ -2259,6 +2843,12 @@ const processByIdtrans = (kodeoutlet: string, idtrans: string): Promise<void> =>
               password: outlet.pwddb
             }
           });
+          const mysql: MysqlInfo = {
+            user: outlet.mysqlUser,
+            password: outlet.mysqlPwd,
+            host: outlet.mysqlHost,
+            dbname: outlet.mysqlDb,
+          };
           Promise.all([
             getListPaymentOutlet(cdb),
             getListKategori(cdb),
@@ -2267,7 +2857,7 @@ const processByIdtrans = (kodeoutlet: string, idtrans: string): Promise<void> =>
             getListTopping(cdb)
           ]).then(([listDataPayment, listKategori, listSubkategori, listBarang, listTopping]) => {
             return cdb.get(idtrans).then((data: Transaksi) => {
-              return processTransaksi([data], kodeoutlet, listKategori, listSubkategori, listBarang, listDataPayment, listTopping, cdb)
+              return processTransaksiERP(mysql, [data], kodeoutlet, listKategori, listSubkategori, listBarang, listDataPayment, listTopping, cdb)
             })
           }).then(() => {
             cdb.close();
@@ -2300,6 +2890,12 @@ const processByTanggal = (kodeoutlet: string, tanggal: string): Promise<void> =>
               password: outlet.pwddb
             }
           });
+          const mysql: MysqlInfo = {
+            user: outlet.mysqlUser,
+            password: outlet.mysqlPwd,
+            host: outlet.mysqlHost,
+            dbname: outlet.mysqlDb,
+          };
           Promise.all([
             getListPaymentOutlet(cdb),
             getListKategori(cdb),
@@ -2323,7 +2919,7 @@ const processByTanggal = (kodeoutlet: string, tanggal: string): Promise<void> =>
               },
               limit: 99999
             }).then(({ docs }: { docs: Transaksi[] }) => {
-              return processTransaksi(docs, kodeoutlet, listKategori, listSubkategori, listBarang, listDataPayment, listTopping, cdb)
+              return processTransaksiERP(mysql, docs, kodeoutlet, listKategori, listSubkategori, listBarang, listDataPayment, listTopping, cdb)
             })
           }).then(() => {
             cdb.close()
@@ -2356,11 +2952,18 @@ const processKasByIdTrans = (kodeoutlet: string, idtrans: string): Promise<void>
               password: outlet.pwddb
             }
           });
+          
+          const mysql: MysqlInfo = {
+            user: outlet.mysqlUser,
+            password: outlet.mysqlPwd,
+            host: outlet.mysqlHost,
+            dbname: outlet.mysqlDb,
+          };
           cdb.get(idtrans).then((data: TransaksiKas) => {
             if (idtrans.match(/^transkasmasuk-/)) {
-              return processKasMasuk([data], kodeoutlet)
+              return processKasMasukERP(mysql,[data], kodeoutlet)
             } else if (idtrans.match(/^transkaskeluar-/)) {
-              return processKasKeluar([data], kodeoutlet)
+              return processKasKeluarERP(mysql, [data], kodeoutlet)
             } else return null
           }).then(() => {
             cdb.close()
@@ -2393,6 +2996,12 @@ const processKasByTanggal = (kodeoutlet: string, tanggal: string): Promise<void>
               password: outlet.pwddb
             }
           });
+          const mysql: MysqlInfo = {
+            user: outlet.mysqlUser,
+            password: outlet.mysqlPwd,
+            host: outlet.mysqlHost,
+            dbname: outlet.mysqlDb,
+          };
           cdb.find({
             selector: {
               _id: {
@@ -2437,9 +3046,9 @@ const processKasByTanggal = (kodeoutlet: string, tanggal: string): Promise<void>
             }, {})
             const hasilProcess = data.map(el => {
               if (el.tipe === 'transkasmasuk') {
-                return processKasMasuk(el.data, kodeoutlet)
+                return processKasMasukERP(mysql,el.data, kodeoutlet)
               } else if (el.tipe === 'transkaskeluar') {
-                return processKasKeluar(el.data, kodeoutlet)
+                return processKasKeluarERP(mysql,el.data, kodeoutlet)
               } else {
                 return Promise.resolve()
               }
@@ -2476,6 +3085,13 @@ const processSessionByTanggal = (kodeoutlet: string, tanggal: string): Promise<v
               password: outlet.pwddb
             }
           });
+          
+          const mysql: MysqlInfo = {
+            user: outlet.mysqlUser,
+            password: outlet.mysqlPwd,
+            host: outlet.mysqlHost,
+            dbname: outlet.mysqlDb,
+          };
           cdb.find({
             selector: {
               _id: {
@@ -2490,7 +3106,7 @@ const processSessionByTanggal = (kodeoutlet: string, tanggal: string): Promise<v
             limit: 99999
           }).then(({ docs }: { docs: Session[] }) => {
             console.log(`Processing ${docs.length} of session for ${outlet.namaoutlet}`);
-            return processSession(docs, kodeoutlet);
+            return processSessionERP(mysql, docs, kodeoutlet);
           }).then(() => {
             cdb.close()
             return resolve()
@@ -2550,7 +3166,7 @@ export = {
   kas: processKasByIdTrans,
   kastanggal: processKasByTanggal,
   sessiontanggal: processSessionByTanggal,
-  cekDetail,
+  cekDetail: cekDetailERP,
   processImportTransaksi,
 }
 // exports.outlet = processByNama

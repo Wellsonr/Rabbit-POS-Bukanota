@@ -187,6 +187,7 @@ interface Transaksi {
   jamretur?: string
   voidReason?: string
   [others: string]: any
+  isReservasi: boolean | null;
 }
 interface PaymentOutlet {
   _id?: string,
@@ -419,6 +420,51 @@ const getListBarang = (cdb) => {
   })
 }
 
+const sinkronDBERP = (myconn: Connection): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    const listCheck: Promise<any[]>[] = [];
+    listCheck.push(
+      new Promise<any[]>((resolveFieldAP, rejectFieldAP) => {
+        myconn.query(
+          "SHOW COLUMNS FROM pos_orderan",
+          (err, results) => {
+            if (err) return rejectFieldAP(err);
+            if (results && results.length > 0) {
+              return resolveFieldAP(results);
+            } else {
+              return resolveFieldAP([]);
+            }
+          }
+        );
+      })
+    );
+
+    Promise.all(listCheck)
+      .then(([
+        listFieldOrderan,
+      ]) => {
+        const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("ISRESERVASI") > -1;
+        const listPromise: Promise<void>[] = [];
+        
+        if (!chkOrderanIsReservasi) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_orderan ADD COLUMN isReservasi TINYINT(1) DEFAULT 0;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        return Promise.all(listPromise);
+      })
+      .then(() => resolve())
+      .catch((err) => reject(err));
+  });
+};
+
+
 const getLastSequence = (headofficecode: string, database: string) => {
   return new Promise<string | null>((resolve, reject) => {
     db.getConnection((err, conn) => {
@@ -580,14 +626,14 @@ const processOrderanERP = (myconn: Connection, kodeoutlet: string, idtrans: stri
   alamat?: string
   nohandphone?: string
   zona?: string
-} | null) => {
+} | null, isReservasi: boolean) => {
   return new Promise<void>((resolve, reject) => {
     const _lastJamBayar: string | null = lastJamBayar == null ? null : moment(lastJamBayar).format("YYYY-MM-DD HH:mm:ss")
     const memberName = member ? member.nama : undefined
     const memberAddress = member ? member.alamat : undefined
     const memberPhone = member ? member.nohandphone : undefined
     const memberZona = member ? member.zona : undefined
-    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona], (err) => {
+    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone, isReservasi) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona, isReservasi], (err) => {
       if (err) return reject(err)
       return resolve()
     })
@@ -1430,9 +1476,11 @@ const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi:
           } else {
             const captainOrderBackup = [...transaksi.captainOrder || []];
             const listCaptainOrder: CaptainOrder[] = [];
-            if (transaksi.captainOrder[0].item.length === listItem.length) {
+            if (transaksi.captainOrder[0]?.item.length === listItem?.length && transaksi.captainOrder[0]?.item.length > 0 && listItem?.length > 0 ) {
               listCaptainOrder.push(transaksi.captainOrder[0]);
-            } else {
+            }else if(transaksi.captainOrder[0]?.item?.length === 0 && listItem?.length === 0) {
+              return resolveBalance(transaksi);
+            }else {
               //check 1 per 1
               conn.query('INSERT INTO pos_dataproblem (kodeoutlet, notrans, tanggal) VALUES (?,?,?)', [kodeoutlet, transaksi._id, moment(transaksi.tanggal).format("YYYY-MM-DD HH:mm:ss")], (err) => {
                 if (err) {
@@ -1531,7 +1579,9 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
             return reject(err)
           }
           myconn.config.timeout = 0
-          hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id)).then(() => {
+          sinkronDBERP(myconn)
+          .then(() =>  hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id)))
+          .then(() => {
             const banyakTrans = listTransaksi.length
             const jumlahLoop = Math.ceil(banyakTrans / 1000)
             const listPromise = []
@@ -1542,7 +1592,8 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                   return new Promise<void>((resolve, reject) => {
                     cekDetailERP(cdb, myconn, kodeoutlet, item).then(el => {
                       const idtrans = el._id
-                      processOrderanERP(myconn, kodeoutlet, idtrans, el.noinvoice, el.tanggal, el.nomeja, el.namacustomer, el.keterangan, el.userin, el.userupt, el.jamin, el.jamupt, el.lastJamBayar, el.statusid, el.displayHarga, el.cover, el.voidReason, el.userRetur, el.useDelivery, el.member).then(() => {
+                      const isReservasi = el?.isReservasi || false;
+                      processOrderanERP(myconn, kodeoutlet, idtrans, el.noinvoice, el.tanggal, el.nomeja, el.namacustomer, el.keterangan, el.userin, el.userupt, el.jamin, el.jamupt, el.lastJamBayar, el.statusid, el.displayHarga, el.cover, el.voidReason, el.userRetur, el.useDelivery, el.member, isReservasi).then(() => {
                         return processCaptainOrderERP(myconn, kodeoutlet, el.captainOrder, idtrans, el.noinvoice, el.detail, listSubkategori, listBarang, listTopping)
                       }).then(() => {
                         return processItemERP(myconn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listSubkategori, listBarang, listTopping)

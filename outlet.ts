@@ -1364,9 +1364,9 @@ const cekDetail = (cdb: any, conn: Connection, kodeoutlet: string, transaksi: Tr
   return new Promise((resolve, reject) => {
     new Promise<Transaksi>((resolveBalance, rejectBalance) => {
       if (transaksi.statusid === 20 || transaksi.statusid === 9) {
-        const jumlahDetail = transaksi.detail.map(el => el.jumlah).reduce((a, b) => a + b, 0);
-        const jumlahPayment = transaksi.payment.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
-        if (jumlahDetail !== jumlahPayment) {
+        const jumlahDetail = transaksi?.detail?.map(el => el.jumlah).reduce((a, b) => a + b, 0) || 0;
+        const jumlahPayment = transaksi?.payment?.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0) || 0;
+        if (jumlahDetail !== jumlahPayment &&  transaksi?.payment?.length > 0) {
           let listItem: TransaksiDetail[] = [];
           for (let i = 0, j = transaksi.payment.length; i < j; i++) {
             for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
@@ -1499,9 +1499,9 @@ const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi:
   return new Promise((resolve, reject) => {
     new Promise<Transaksi>((resolveBalance, rejectBalance) => {
       if (transaksi.statusid === 20 || transaksi.statusid === 9) {
-        const jumlahDetail = transaksi.detail.map(el => el.jumlah).reduce((a, b) => a + b, 0);
-        const jumlahPayment = transaksi.payment.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0);
-        if (jumlahDetail !== jumlahPayment) {
+        const jumlahDetail = transaksi?.detail?.map(el => el.jumlah).reduce((a, b) => a + b, 0) || 0;
+        const jumlahPayment = transaksi?.payment?.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0) || 0;
+        if (jumlahDetail !== jumlahPayment  &&  transaksi?.payment?.length > 0) {
           let listItem: TransaksiDetail[] = [];
           for (let i = 0, j = transaksi.payment.length; i < j; i++) {
             for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
@@ -1619,7 +1619,7 @@ const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi:
           }
         }
         if (newTransaksi.statusid === 20 || transaksi.statusid === 9) {
-          if (newTransaksi.payment.length > 0) {
+          if (newTransaksi?.payment?.length > 0) {
             prosesCekPayment(0);
           } else {
             return resolvePayment(newTransaksi);
@@ -2178,39 +2178,40 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                         const listPromise = listTransaksiTerposting
                           .map(el => {
                             return new Promise<void>((resolve2, reject2) => {
+                              if(!el.noinvoice) return resolve2();
                               const promH = new Promise<void>((resolve3, reject3) => {
-                                const diskon = el.payment.map(pay => {
+                                const diskon = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
                                     return pay.discountAmount
                                   } else return 0;
-                                }).reduce((a, b) => a + b, 0);
-                                const service = el.payment.map(pay => {
+                                }).reduce((a, b) => a + b, 0) || 0;
+                                const service = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
                                     return pay.serviceAmount
                                   } else return 0
-                                }).reduce((a, b) => a + b, 0);
-                                const tax = el.payment.map(pay => {
+                                }).reduce((a, b) => a + b, 0) || 0;
+                                const tax = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
                                     return pay.taxAmount
                                   } else return 0
-                                }).reduce((a, b) => a + b, 0);
-                                const ongkir = el.payment.map(pay => {
+                                }).reduce((a, b) => a + b, 0) || 0;
+                                const ongkir = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
                                     return pay.ongkir || 0
                                   } else return 0;
-                                }).reduce((a, b) => a + b, 0);
-                                const pembulatan = el.payment.map(pay => {
+                                }).reduce((a, b) => a + b, 0) || 0;
+                                const pembulatan = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
                                     return pay.pembulatan || 0
                                   } else return 0;
-                                }).reduce((a, b) => a + b, 0);
-                                const jumlah = el.payment.map(pay => {
+                                }).reduce((a, b) => a + b, 0) || 0;
+                                const jumlah = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
                                     return pay.item.map(item => {
                                       return item.qty * (item.harga * (100 - item.discountPercent) / 100)
-                                    }).reduce((a, b) => a + b, 0);
+                                    }).reduce((a, b) => a + b, 0) || 0;
                                   } else return 0;
-                                }).reduce((a, b) => a + b, 0);
+                                }).reduce((a, b) => a + b, 0) || 0;
                                 const grandtot = jumlah - diskon + tax + service + ongkir + pembulatan;
                                 let diskonpers = 0;
                                 let servicepers = 0;
@@ -2222,9 +2223,12 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                   servicepers = service / (jumlah - diskon) * 100;
                                   taxpers = tax / (jumlah - diskon + service) * 100;
                                 } else {
-                                  if (el.payment.length > 0) {
+                                  if (el?.payment?.length > 0) {
                                     servicepers = el.payment[0].servicePercent;
                                     taxpers = el.payment[0].taxPercent;
+                                  }else{
+                                    servicepers= 0;
+                                    taxpers=0;
                                   }
                                 }
                                 //INSERT HEADER
@@ -2237,48 +2241,82 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                               });
                               promH
                                 .then(() => {
-                                  const listDetail = el.payment.map(det => {
+                                  const listDetailPromises: Promise<void>[] = (el?.payment || []).map((det: any) => {
                                     return new Promise<void>((resolve3, reject3) => {
                                       if (det.noinvoice.indexOf('split-to-') < 0) {
-                                        const listMoreDetail = det.item.map(item => {
+                                        const listMoreDetailPromises: Promise<void>[] = det.item.map((item: any) => {
                                           return new Promise<void>((resolve4, reject4) => {
-                                            myconn.query('INSERT INTO tblorderand (kodeorderan,kodebarang,qty,harga,jumlah,satuan,qtysat,hargajual,diskon) VALUES (?,?,?,?,?,?,?,?,?);', [`${el.noinvoice}-${kodeOutletERP}`, item.kodebarang, item.qty, item.harga, item.jumlah, 'pcs', item.qty, item.harga, item.discountAmount], (err, results) => {
-                                              if (err) return reject4(err);
-                                              if (results.affectedRows > 0) return resolve4();
-                                              else return reject4(new Error('Failed to insert data'));
-                                            });
+                                            myconn.query(
+                                              'INSERT INTO tblorderand (kodeorderan,kodebarang,qty,harga,jumlah,satuan,qtysat,hargajual,diskon) VALUES (?,?,?,?,?,?,?,?,?);',
+                                              [`${el.noinvoice}-${kodeOutletERP}`, item.kodebarang, item.qty, item.harga, item.jumlah, 'pcs', item.qty, item.harga, item.discountAmount],
+                                              (err: Error, results: { affectedRows: number }) => {
+                                                if (err) {
+                                                  return reject4(err);
+                                                }
+                                                if (results.affectedRows > 0) {
+                                                  return resolve4();
+                                                } else {
+                                                  return reject4(new Error('Failed to insert data'));
+                                                }
+                                              }
+                                            );
                                           });
                                         });
-                                        Promise
-                                          .all(listMoreDetail)
+                                
+                                        Promise.all(listMoreDetailPromises)
                                           .then(() => resolve3())
-                                          .catch(reject3);
-                                      } else return resolve3();
+                                          .catch(err => reject3(err));
+                                      } else {
+                                        resolve3();
+                                      }
                                     });
                                   });
-                                  return Promise.all(listDetail);
+                                
+                                  return Promise.all(listDetailPromises);
                                 })
                                 .then(() => {
-                                  const listPayment = el.payment.map(det => {
+                                  const listPaymentPromises: Promise<void>[] = (el?.payment || []).map((det: any) => {
                                     return new Promise<void>((resolve3, reject3) => {
                                       if (det.noinvoice.indexOf('split-to-') < 0) {
-                                        const listMoreDetail = det.payment.map(pay => {
+                                        if(!el.noinvoice) return resolve3();
+                                        const listMoreDetailPromises: Promise<void>[] = det.payment.map((pay: any) => {
                                           return new Promise<void>((resolve4, reject4) => {
-                                            myconn.query('INSERT INTO tblorderanpayment (kodeorderan,kodepayment,jumlah,userin,userupt,jamin,jamupt,namapayment,nobukti) VALUES (?,?,?,?,?,?,?,?,?)', [`${el.noinvoice}-${kodeOutletERP}`, pay.kodepayment, pay.amount, det.userin, det.userin, moment(det.jamin).format('YYYY-MM-DD HH:mm:ss'), moment(det.jamin).format('YYYY-MM-DD HH:mm:ss'), pay.namapayment, pay.transRef !== null ? pay.transRef : ''], (err, results) => {
-                                              if (err) return reject4(err);
-                                              if (results.affectedRows > 0) return resolve4();
-                                              else return reject4(new Error('Failed to insert data'));
-                                            });
+                                            myconn.query(
+                                              'INSERT INTO tblorderanpayment (kodeorderan,kodepayment,jumlah,userin,userupt,jamin,jamupt,namapayment,nobukti) VALUES (?,?,?,?,?,?,?,?,?)',
+                                              [
+                                                `${el.noinvoice}-${kodeOutletERP}`,
+                                                pay.kodepayment,
+                                                pay.amount,
+                                                det.userin,
+                                                det.userin,
+                                                moment(det.jamin).format('YYYY-MM-DD HH:mm:ss'),
+                                                moment(det.jamin).format('YYYY-MM-DD HH:mm:ss'),
+                                                pay.namapayment,
+                                                pay.transRef !== null ? pay.transRef : ''
+                                              ],
+                                              (err: Error, results: { affectedRows: number }) => {
+                                                if (err) {
+                                                  return reject4(err);
+                                                }
+                                                if (results.affectedRows > 0) {
+                                                  return resolve4();
+                                                } else {
+                                                  return reject4(new Error('Failed to insert data'));
+                                                }
+                                              }
+                                            );
                                           });
                                         });
-                                        Promise
-                                          .all(listMoreDetail)
+                                
+                                        Promise.all(listMoreDetailPromises)
                                           .then(() => resolve3())
-                                          .catch(reject3);
-                                      } else return resolve3();
+                                          .catch(err => reject3(err));
+                                      } else {
+                                        resolve3();
+                                      }
                                     });
                                   });
-                                  return Promise.all(listPayment)
+                                  return Promise.all(listPaymentPromises);
                                 })
                                 .then(() => resolve2())
                                 .catch(reject2);

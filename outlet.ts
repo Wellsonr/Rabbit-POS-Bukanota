@@ -40,6 +40,7 @@ interface KasDetail {
   namabiaya: string
   amount: number
   keterangan?: string
+  idpr?: number | null
 }
 
 interface TransaksiKas {
@@ -287,6 +288,278 @@ interface Barang {
   variant: Variant[],
   [others: string]: any
 }
+const generateJurnal = (
+  userin: string,
+  myconn: Connection,
+  notrans: string,
+  tanggal: Date | string,
+  periode: string,
+  ketrans: string,
+  listDataDet: any[],
+  custid: string,
+  kodedevision: string | null | undefined | any,
+) => {
+  return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolveCekPeriode, rejectCekPeriode) => {
+      myconn.query(
+        "SELECT MAX(tanggal) AS periode FROM tblperiode WHERE aktif = 1",
+        (err: any, results: any[]) => {
+          if (err) return rejectCekPeriode(err);
+          if (results && results.length > 0) {
+            const [{ periode }] = results;
+            if (periode) {
+              const _periode = moment(periode).set({
+                hour: 0,
+                minute: 0,
+                second: 0,
+              });
+              const _tanggal = moment(tanggal).set({
+                hour: 0,
+                minute: 0,
+                second: 0,
+              });
+              if (moment(_periode).isSameOrBefore(_tanggal))
+                return resolveCekPeriode();
+              else return rejectCekPeriode(new Error("Periode Sudah Ditutup"));
+            } else return resolveCekPeriode();
+          } else return resolveCekPeriode();
+        }
+      );
+    })
+      .then(() => {
+        return new Promise<void>((resolveSave, rejectSave) => {
+          const header = new Promise<void>((resolveHeader, rejectHeader) => {
+            myconn.query(
+              `DELETE FROM tbltransh WHERE notrans = ?`,
+              [notrans],
+              (err: any, resp: any) => {
+                if (err) return rejectHeader(err);
+                myconn.query(
+                  "INSERT INTO tbltransh (notrans, term, tanggal, userin, userupt, jam, jamupt, status, periode, kettrans, kodedevision) VALUE (?, 0, ?, ?, ?, NOW(), NOW(), 20, ?, ?, ?)",
+                  [notrans, tanggal, userin, userin, periode, ketrans, kodedevision || "GEN0001"],
+                  (err: any, results: any) => {
+                    if (err) return rejectHeader(err);
+                    if (results && results.affectedRows > 0) {
+                      return resolveHeader();
+                    } else {
+                      return rejectHeader(
+                        new Error("Gagal Simpan Transaksi H")
+                      );
+                    }
+                  }
+                );
+              }
+            );
+          });
+
+          const detail = new Promise<void>((resolveDetail, rejectDetail) => {
+            new Promise<void>((resolveHapusPrev, rejectHapusPrev) => {
+              myconn.query(
+                `DELETE FROM tbltransd WHERE notrans = ?`,
+                [notrans],
+                (err: any, resp: any) => {
+                  if (err) return rejectHapusPrev(err);
+                  return resolveHapusPrev();
+                }
+              );
+            })
+              .then(() => {
+                return new Promise<void>((resolvePosting, rejectPosting) => {
+                  const postingDetail = (i: number) => {
+                    const el = listDataDet[i];
+                    const urut = i + 1;
+                    const kodedevisionDetail =  kodedevision || el.kodedevision || 'GEN0001';
+                    const cekCoacc = new Promise<any>(
+                      (resolveCoacc, rejectCoacc) => {
+                        const cekSupplier = new Promise<any>((resolveSup) => {
+                          myconn.query(
+                            "SELECT id FROM tbcoacc WHERE acctype IN ('1104','2101','24012') AND id = ?",
+                            [el.idpr],
+                            (err: any, results: any[]) => {
+                              if (err) return rejectCoacc(err);
+                              if (results && results.length > 0) {
+                                return resolveSup({
+                                  mynamaclient: custid || el.kodeclientd || "",
+                                  mytypetrans: "AP",
+                                  myjenisclient: "S",
+                                });
+                              } else {
+                                return resolveSup({
+                                  mynamaclient: "",
+                                  mytypetrans: "",
+                                  myjenisclient: "",
+                                });
+                              }
+                            }
+                          );
+                        });
+                        cekSupplier.then((sup) => {
+                          if (
+                            sup.mynamaclient &&
+                            sup.mytypetrans &&
+                            sup.myjenisclient
+                          )
+                            return resolveCoacc(sup);
+                          const cekCusstomer = new Promise<any>(
+                            (resolveCust) => {
+                              myconn.query(
+                                "SELECT id FROM tbcoacc WHERE acctype IN ('1103', '2102', '11042', '11031') AND id = ?",
+                                [el.idpr],
+                                (err: any, results: any[]) => {
+                                  if (err) return rejectCoacc(err);
+                                  if (results && results.length > 0) {
+                                    return resolveCust({
+                                      mynamaclient:
+                                        custid || el.kodeclientd || "",
+                                      mytypetrans: "AR",
+                                      myjenisclient: "C",
+                                    });
+                                  } else {
+                                    return resolveCust({
+                                      mynamaclient: "",
+                                      mytypetrans: "",
+                                      myjenisclient: "",
+                                    });
+                                  }
+                                }
+                              );
+                            }
+                          );
+                          cekCusstomer.then((cust) => {
+                            return resolveCoacc(cust);
+                          });
+                        });
+                      }
+                    );
+
+                    cekCoacc
+                      .then((c) => {
+                        const ccy = el.ccy ? el.ccy : "IDR";
+                        const eqv = el.eqv ? el.eqv : "";
+                        const kurs = el.kurs ? el.kurs : 1;
+                        const _tanggalinv = el.tanggalinv
+                          ? el.tanggalinv
+                          : tanggal;
+
+                        const cekEqvCoacc = new Promise<any>(
+                          (resolveCekEqv, rejectCekEqv) => {
+                            myconn.query(
+                              'SELECT * FROM tbcoacc WHERE id = ? AND ccy <> "IDR"',
+                              [el.idpr],
+                              (err: any, results: any[]) => {
+                                if (err) return rejectCekEqv(err);
+                                if (results && results.length > 0)
+                                  return resolveCekEqv(results);
+                                else return resolveCekEqv([]);
+                              }
+                            );
+                          }
+                        );
+                        cekEqvCoacc.then((listCoaEQV) => {
+                          return new Promise<void>(
+                            (resolveSave, rejectSave) => {
+                              new Promise<void>(
+                                (resolveInsertDetail2, rejectInsertDetail2) => {
+                                  if (listCoaEQV.length === 0)
+                                    return resolveInsertDetail2();
+                                  const eqvAmount = el.amount;
+                                  const [{ ccy }] = listCoaEQV;
+                                  myconn.query(`INSERT INTO tbltransd (notrans, nopo, tanggal, qty, ket, idpr, statusid, ccy, decs, idvehicle, kodesales, amount, kodeclient, typetrans, jenisclient, nobaris, kodedevision, eqv, voucher, nobukti, kurs, tanggalinv) VALUE (?, "", ?, 0, "", ?, 20, ?, ?, 0, "GEN0001", ?, ?, ?, ?, ?, ?, ?, "",?,?, ?)`, [notrans, tanggal, el.idpr, ccy, el.decs, eqvAmount, c.mynamaclient, c.mytypetrans, c.myjenisclient, urut, kodedevisionDetail, eqv, el.nobukti || "", kurs, _tanggalinv],
+                                    (err: any, results: any) => {
+                                      if (err) return rejectInsertDetail2(err);
+                                      if (results && results.affectedRows > 0) {
+                                        return resolveInsertDetail2();
+                                      } else {
+                                        return rejectInsertDetail2(
+                                          new Error(
+                                            "Gagal Simpan Transaksi Detail"
+                                          )
+                                        );
+                                      }
+                                    }
+                                  );
+                                }
+                              )
+                                .then(() => {
+                                  return new Promise<void>((resolveInsertDetail, rejectInsertDetail) => {
+                                    if (listCoaEQV.length === 0) {
+                                      myconn.query(`INSERT INTO tbltransd (notrans, nopo, tanggal, qty, ket, idpr, statusid, ccy, decs, idvehicle, kodesales, amount, kodeclient, typetrans, jenisclient, nobaris, kodedevision, eqv, voucher, nobukti, tanggalinv) VALUE (?, "", ?, 0, "", ?, 20, ?, ?, 0, "GEN0001", ?, ?, ?, ?, ?, ?, ?, "",?, ?)`, [notrans, tanggal, el.idpr, ccy, el.decs, el.amount * kurs, c.mynamaclient, c.mytypetrans, c.myjenisclient, urut, kodedevisionDetail, eqv, el.nobukti || "", _tanggalinv],
+                                        (err: any, results: any) => {
+                                          if (err)
+                                            return rejectInsertDetail(err);
+                                          if (
+                                            results &&
+                                            results.affectedRows > 0
+                                          ) {
+                                            return resolveInsertDetail();
+                                          } else {
+                                            return rejectInsertDetail(
+                                              new Error(
+                                                "Gagal Simpan Transaksi Detail"
+                                              )
+                                            );
+                                          }
+                                        }
+                                      );
+                                    } else {
+                                      const eqvAmount = el.amount * kurs;
+                                      myconn.query(`INSERT INTO tbltransd (notrans, nopo, tanggal, qty, ket, idpr, statusid, ccy, decs, idvehicle, kodesales, amount, kodeclient, typetrans, jenisclient, nobaris, kodedevision, eqv, voucher, nobukti, kurs, tanggalinv) VALUE (?, "", ?, 0, "", ?, 20, ?, ?, 0, "GEN0001", ?, ?, ?, ?, ?, ?, ?, "",?, ?, ?)`, [notrans, tanggal, el.idpr, "IDR", el.decs, eqvAmount, c.mynamaclient, c.mytypetrans, c.myjenisclient, urut, kodedevisionDetail, "EQV", el.nobukti || "", kurs, _tanggalinv],
+                                        (err: any, results: any) => {
+                                          if (err)
+                                            return rejectInsertDetail(err);
+                                          if (
+                                            results &&
+                                            results.affectedRows > 0
+                                          ) {
+                                            return resolveInsertDetail();
+                                          } else {
+                                            return rejectInsertDetail(
+                                              new Error(
+                                                "Gagal Simpan Transaksi Detail"
+                                              )
+                                            );
+                                          }
+                                        }
+                                      );
+                                    }
+                                  }
+                                  );
+                                })
+                                .then(() => resolveSave())
+                                .catch((err) => rejectSave(err));
+                            }
+                          );
+                        });
+                      })
+                      .then(() => {
+                        i++;
+                        if (i < listDataDet.length) {
+                          return postingDetail(i);
+                        } else return resolvePosting();
+                      })
+                      .catch((err) => rejectPosting(err));
+                  };
+                  postingDetail(0);
+                })
+                  .then(() => {
+                    return resolveDetail();
+                  })
+                  .catch((err) => rejectDetail(err));
+              })
+              .catch((err) => rejectDetail(err));
+          });
+
+          Promise.all([header, detail])
+            .then(() => {
+              return resolveSave();
+            })
+            .catch((err) => rejectSave(err));
+        });
+      })
+      .then(() => resolve())
+      .catch((err) => reject(err));
+  });
+};
 
 const isNumeric = (n: any): Boolean => !isNaN(parseFloat(n)) && isFinite(n);
 
@@ -427,15 +700,30 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     const listCheck: Promise<any[]>[] = [];
     listCheck.push(
-      new Promise<any[]>((resolveFieldAP, rejectFieldAP) => {
+      new Promise<any[]>((resolveField, rejectFiel) => {
         myconn.query(
           "SHOW COLUMNS FROM pos_orderan",
           (err, results) => {
-            if (err) return rejectFieldAP(err);
+            if (err) return rejectFiel(err);
             if (results && results.length > 0) {
-              return resolveFieldAP(results);
+              return resolveField(results);
             } else {
-              return resolveFieldAP([]);
+              return resolveField([]);
+            }
+          }
+        );
+      })
+    );
+    listCheck.push(
+      new Promise<any[]>((resolveField, rejectFiel) => {
+        myconn.query(
+          "SHOW COLUMNS FROM pos_transkasmasukd",
+          (err, results) => {
+            if (err) return rejectFiel(err);
+            if (results && results.length > 0) {
+              return resolveField(results);
+            } else {
+              return resolveField([]);
             }
           }
         );
@@ -445,11 +733,13 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
     Promise.all(listCheck)
       .then(([
         listFieldOrderan,
+        listFieldTransMasukD,
       ]) => {
         const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("ISRESERVASI") > -1;
         const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
         const chkOrderanNilaiKeterangan =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIKETERANGAN") > -1;
         const chkOrderanTglReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
+        const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
         const listPromise: Promise<void>[] = [];
         
         if (!chkOrderanIsReservasi) {
@@ -489,6 +779,17 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE pos_orderan ADD COLUMN tanggalReservasi DATETIME DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkTransMasukDIDPR) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_transkasmasukd ADD COLUMN idpr INT(11) DEFAULT NULL;`;
               myconn.query(querySendTo, (err) => {
                 if (err) return rejectTabel(err);
                 return resolveTabel();
@@ -1815,17 +2116,7 @@ const processSessionERP = (mysqlConfig: MysqlInfo, listSession: Session[], kodeo
     } else return resolve()
   })
 }
-const hapusPreviousKasMasuk = (conn: Connection, kodeoutlet: string, listTrans: string[]) => {
-  return new Promise<void>((resolve, reject) => {
-    conn.query("DELETE FROM tbltranskasmasuk WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
-      if (err) return reject(err)
-      conn.query("DELETE FROM tbltranskasmasukd WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
-        if (err) return reject(err)
-        return resolve()
-      })
-    })
-  })
-}
+
 const hapusPreviousKasMasukERP = (myconn: Connection, kodeoutlet: string, listTrans: string[]) => {
   return new Promise<void>((resolve, reject) => {
     myconn.query("DELETE FROM pos_transkasmasuk WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
@@ -1838,101 +2129,119 @@ const hapusPreviousKasMasukERP = (myconn: Connection, kodeoutlet: string, listTr
   })
 }
 
-const processKasMasuk = (listKasMasuk: TransaksiKas[], kodeoutlet: string) => {
-  return new Promise<void>((resolve, reject) => {
-    if (listKasMasuk.length > 0) {
-      db.getConnection((err, conn) => {
-        if (err) return reject(err)
-        conn.beginTransaction((err) => {
-          if (err) return reject(err)
-          hapusPreviousKasMasuk(conn, kodeoutlet, listKasMasuk.map(el => el._id)).then(() => {
-            const hasilProcess = listKasMasuk.map(el => {
-              return new Promise<void>((resolve, reject) => {
-                const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
-                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined
-                conn.query("INSERT INTO tbltranskasmasuk (kodeoutlet,idtrans,noinvoice,sessionId,userin,jamin,tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (err) => {
-                  if (err) return reject(err)
-                  const promises = el.detail.map(dt => {
-                    return new Promise<void>((resolve, reject) => {
-                      conn.query("INSERT INTO tbltranskasmasukd (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (err) => {
-                        if (err) return reject()
-                        else return resolve()
-                      })
-                    })
-                  })
-                  Promise.all<void>(promises).then(() => resolve()).catch(reject)
-                })
-              })
-            })
-            return Promise.all<void>(hasilProcess)
-          }).then(() => {
-            conn.commit(() => {
-              conn.release();
-            })
-            return resolve()
-          }).catch(err => {
-            conn.rollback(() => {
-              conn.release();
-            })
-            console.log(err)
-            return reject(err)
-          })
-        })
-      })
-    } else return resolve()
-  })
-}
+
 const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[], kodeoutlet: string) => {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<void>((resolveProcessKasMasuk, rejectProcessKasMasuk) => {
     if (listKasMasuk.length > 0) {
       const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
-      myconn.beginTransaction((err) => {
-        if (err) {
-          myconn.end()
-          return reject(err)
+      myconn.beginTransaction((errBeginTransaction) => {
+        if (errBeginTransaction) {
+          myconn.end();
+          return rejectProcessKasMasuk(errBeginTransaction);
         }
-        hapusPreviousKasMasukERP(myconn, kodeoutlet, listKasMasuk.map(el => el._id)).then(() => {
+
+        sinkronDBERP(myconn)
+          .then(() => hapusPreviousKasMasukERP(myconn, kodeoutlet, listKasMasuk.map(el => el._id)))
+          .then(() => {
             const hasilProcess = listKasMasuk.map(el => {
-              return new Promise<void>((resolve, reject) => {
+              return new Promise<void>((resolveInsertTransKasMasuk, rejectInsertTransKasMasuk) => {
                 const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
-                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined
-                myconn.query("INSERT INTO tbltranskasmasuk (kodeoutlet,idtrans,noinvoice,sessionId,userin,jamin,tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (err) => {
-                  if (err) return reject(err)
-                  const promises = el.detail.map(dt => {
-                    return new Promise<void>((resolve, reject) => {
-                      myconn.query("INSERT INTO tbltranskasmasukd (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (err) => {
-                        if (err) return reject()
-                        else return resolve()
-                      })
+                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined;
+                myconn.query("INSERT INTO pos_transkasmasuk (kodeoutlet, idtrans, noinvoice, sessionId, userin, jamin, tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (errInsertTransKasMasuk) => {
+                  if (errInsertTransKasMasuk) return rejectInsertTransKasMasuk(errInsertTransKasMasuk);
+
+                  const promisesDetail = el.detail.map(dt => {
+                    return new Promise<void>((resolveInsertTransKasMasukDetail, rejectInsertTransKasMasukDetail) => {
+                      myconn.query("INSERT INTO pos_transkasmasukd (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (errInsertTransKasMasukDetail) => {
+                        if (errInsertTransKasMasukDetail) return rejectInsertTransKasMasukDetail(errInsertTransKasMasukDetail);
+                        else return resolveInsertTransKasMasukDetail();
+                      });
+                    });
+                  });
+
+                  Promise.all<void>(promisesDetail)
+                  .then(() => {
+                    return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
+                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi='outlet-3d1kj1troelu2bvn0u' AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [], (err, results) => {
+                        if(err) return rejecCekCOA(err);
+                        if(results?.length > 0){
+                            const [{coaKas}] = results;
+                            return resolveCekCOA(coaKas)
+                        }else{
+                          return resolveCekCOA(0)
+                        }
+                      });
                     })
                   })
-                  Promise.all<void>(promises).then(() => resolve()).catch(reject)
-                })
-              })
-            })
-            return Promise.all<void>(hasilProcess)
-          }).then(() => {
+                    .then((coaKas) => {
+                      return new Promise<void>((resolveJurnal, rejectJurnal) => {   
+                        const ketrans = `Kas Masuk Kasir`;
+                        const notrans= `transkasmasuk-${el.noinvoice}-${kodeoutlet}`;
+                        const listDataDetTrans = [];
+                        el.detail.map(dt => {
+                          const { idpr, namabiaya, amount  } = dt;
+                          listDataDetTrans.push({
+                            idpr: coaKas,
+                            decs: `Kas Masuk Kasir: ${namabiaya}`,
+                            amount,
+                            nobukti: notrans,
+                          });
+                          listDataDetTrans.push({
+                            idpr: idpr,
+                            decs: `Kas Masuk Kasir: ${namabiaya}`,
+                            amount: amount * -1,
+                            nobukti: notrans,
+                          });
+                        });
+                           generateJurnal(
+                            el.userin,
+                            myconn,
+                            notrans,
+                            moment(tanggal).format("YYYY-MM-DD HH:mm:ss"),
+                            moment(tanggal).format("YYYYMM"),
+                            ketrans,
+                            listDataDetTrans,
+                            "",
+                            kodeoutlet
+                          )
+                          .then(() => resolveJurnal())
+                          .catch((err) => rejectJurnal(err));
+                      })
+                    })
+                    .then(() => resolveInsertTransKasMasuk())
+                    .catch(rejectInsertTransKasMasuk);
+                });
+              });
+            });
+
+            return Promise.all<void>(hasilProcess);
+          })
+          .then(() => {
             myconn.commit(() => {
               myconn.end();
-            })
-            return resolve()
-          }).catch(err => {
+            });
+            return resolveProcessKasMasuk();
+          })
+          .catch(err => {
             myconn.rollback(() => {
               myconn.end();
-            })
-            console.log(err)
-            return reject(err)
-          })
-        })
-    
-    } else return resolve()
-  })
-}
-const hapusPreviousKasKeluar = (conn: Connection, kodeoutlet: string, listTrans: string[]) => {
+            });
+            console.log(err);
+            return rejectProcessKasMasuk(err);
+          });
+      });
+    } else {
+      return resolveProcessKasMasuk();
+    }
+  });
+};
+
+
+const hapusPreviousKasKeluarERP = (myconn: Connection, kodeoutlet: string, listTrans: string[]) => {
   return new Promise<void>((resolve, reject) => {
-    conn.query("DELETE FROM tbltranskaskeluar WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
+    myconn.query("DELETE FROM pos_transkaskeluar WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
       if (err) return reject(err)
-      conn.query("DELETE FROM tbltranskaskeluard WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
+      myconn.query("DELETE FROM pos_transkaskeluard WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
         if (err) return reject(err)
         return resolve()
       })
@@ -1940,96 +2249,113 @@ const hapusPreviousKasKeluar = (conn: Connection, kodeoutlet: string, listTrans:
   })
 }
 
-const processKasKeluar = (listKasKeluar: TransaksiKas[], kodeoutlet: string) => {
-  return new Promise<void>((resolve, reject) => {
-    if (listKasKeluar.length > 0) {
-      db.getConnection((err, conn) => {
-        if (err) return reject(err)
-        conn.beginTransaction((err) => {
-          if (err) return reject(err)
-          hapusPreviousKasKeluar(conn, kodeoutlet, listKasKeluar.map(el => el._id)).then(() => {
-            const hasilProcess = listKasKeluar.map(el => {
-              return new Promise<void>((resolve, reject) => {
-                const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
-                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined
-                conn.query("INSERT INTO tbltranskaskeluar (kodeoutlet,idtrans,noinvoice,sessionId,userin,jamin,tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (err) => {
-                  if (err) return reject(err)
-                  const promises = el.detail.map(dt => {
-                    return new Promise<void>((resolve, reject) => {
-                      conn.query("INSERT INTO tbltranskaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (err) => {
-                        if (err) return reject()
-                        else return resolve()
-                      })
-                    })
-                  })
-                  Promise.all<void>(promises).then(() => resolve()).catch(reject)
-                })
-              })
-            })
-            return Promise.all<void>(hasilProcess)
-          }).then(() => {
-            conn.commit(() => {
-              conn.release();
-            })
-            return resolve()
-          }).catch(err => {
-            conn.rollback(() => {
-              conn.release();
-            })
-            console.log(err)
-            return reject(err)
-          })
-        })
-      })
-    } else return resolve()
-  })
-}
+
 const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas[], kodeoutlet: string) => {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<void>((resolveProcessKasKeluar, rejectProcessKasKeluar) => {
     if (listKasKeluar.length > 0) {
       const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
-      myconn.beginTransaction((err) => {
-        if (err) {
-          myconn.end()
-          return reject(err)
+      myconn.beginTransaction((errBeginTransaction) => {
+        if (errBeginTransaction) {
+          myconn.end();
+          return rejectProcessKasKeluar(errBeginTransaction);
         }
-          hapusPreviousKasKeluar(myconn, kodeoutlet, listKasKeluar.map(el => el._id)).then(() => {
+
+        sinkronDBERP(myconn)
+          .then(() => hapusPreviousKasKeluarERP(myconn, kodeoutlet, listKasKeluar.map(el => el._id)))
+          .then(() => {
             const hasilProcess = listKasKeluar.map(el => {
-              return new Promise<void>((resolve, reject) => {
+              return new Promise<void>((resolveInsertTransKasKeluar, rejectInsertTransKasKeluar) => {
                 const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
-                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined
-                myconn.query("INSERT INTO tbltranskaskeluar (kodeoutlet,idtrans,noinvoice,sessionId,userin,jamin,tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (err) => {
-                  if (err) return reject(err)
-                  const promises = el.detail.map(dt => {
-                    return new Promise<void>((resolve, reject) => {
-                      myconn.query("INSERT INTO tbltranskaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (err) => {
-                        if (err) return reject()
-                        else return resolve()
-                      })
+                const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined;
+                myconn.query("INSERT INTO pos_transkaskeluar (kodeoutlet, idtrans, noinvoice, sessionId, userin, jamin, tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (errInsertTransKasKeluar) => {
+                  if (errInsertTransKasKeluar) return rejectInsertTransKasKeluar(errInsertTransKasKeluar);
+
+                  const promisesDetail = el.detail.map(dt => {
+                    return new Promise<void>((resolveInsertTransKasKeluarDetail, rejectInsertTransKasKeluarDetail) => {
+                      myconn.query("INSERT INTO pos_transkaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (errInsertTransKasKeluarDetail) => {
+                        if (errInsertTransKasKeluarDetail) return rejectInsertTransKasKeluarDetail(errInsertTransKasKeluarDetail);
+                        else return resolveInsertTransKasKeluarDetail();
+                      });
+                    });
+                  });
+
+                  Promise.all<void>(promisesDetail)
+                  .then(() => {
+                    return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
+                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi='outlet-3d1kj1troelu2bvn0u' AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [], (err, results) => {
+                        if(err) return rejecCekCOA(err);
+                        if(results?.length > 0){
+                            const [{coaKas}] = results;
+                            return resolveCekCOA(coaKas)
+                        }else{
+                          return resolveCekCOA(0)
+                        }
+                      });
                     })
                   })
-                  Promise.all<void>(promises).then(() => resolve()).catch(reject)
-                })
-              })
-            })
-            return Promise.all<void>(hasilProcess)
-          }).then(() => {
+                    .then((coaKas) => {
+                      return new Promise<void>((resolveJurnal, rejectJurnal) => {   
+                        const ketrans = `Kas Keluar Kasir`;
+                        const notrans= `transkaskeluar-${el.noinvoice}-${kodeoutlet}`;
+                        const listDataDetTrans = [];
+                        el.detail.map(dt => {
+                          const { idpr, namabiaya, amount  } = dt;
+                          listDataDetTrans.push({
+                            idpr: coaKas,
+                            decs: `Kas Keluar Kasir: ${namabiaya}`,
+                            amount: amount * -1,
+                            nobukti: notrans,
+                          });
+                          listDataDetTrans.push({
+                            idpr: idpr,
+                            decs: `Kas Keluar Kasir: ${namabiaya}`,
+                            amount: amount,
+                            nobukti: notrans,
+                          });
+                        });
+                           generateJurnal(
+                            el.userin,
+                            myconn,
+                            notrans,
+                            moment(tanggal).format("YYYY-MM-DD HH:mm:ss"),
+                            moment(tanggal).format("YYYYMM"),
+                            ketrans,
+                            listDataDetTrans,
+                            "",
+                            kodeoutlet
+                          )
+                          .then(() => resolveJurnal())
+                          .catch((err) => rejectJurnal(err));
+                      })
+                    })
+                    .then(() => resolveInsertTransKasKeluar())
+                    .catch(rejectInsertTransKasKeluar);
+                });
+              });
+            });
+
+            return Promise.all<void>(hasilProcess);
+          })
+          .then(() => {
             myconn.commit(() => {
               myconn.end();
-            })
-            return resolve()
-          }).catch(err => {
+            });
+            return resolveProcessKasKeluar();
+          })
+          .catch(err => {
             myconn.rollback(() => {
               myconn.end();
-            })
-            console.log(err)
-            return reject(err)
-          })
-        })
-   
-    } else return resolve()
-  })
-}
+            });
+            console.log(err);
+            return rejectProcessKasKeluar(err);
+          });
+      });
+    } else {
+      return resolveProcessKasKeluar();
+    }
+  });
+};
+
 
 const hapusPreviousStock = (conn: Connection, kodeoutlet: string, idtrans: string[]) => {
   return new Promise<void>((resolve, reject) => {
@@ -3139,7 +3465,8 @@ const processKasByIdTrans = (kodeoutlet: string, idtrans: string): Promise<void>
             host: outlet.mysqlHost,
             dbname: outlet.mysqlDb,
           };
-          cdb.get(idtrans).then((data: TransaksiKas) => {
+          cdb.get(idtrans)
+          .then((data: TransaksiKas) => {
             if (idtrans.match(/^transkasmasuk-/)) {
               return processKasMasukERP(mysql,[data], kodeoutlet)
             } else if (idtrans.match(/^transkaskeluar-/)) {

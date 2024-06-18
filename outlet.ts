@@ -729,17 +729,34 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         );
       })
     );
+    listCheck.push(
+      new Promise<any[]>((resolveField, rejectFiel) => {
+        myconn.query(
+          "SHOW COLUMNS FROM pos_transkaskeluard",
+          (err, results) => {
+            if (err) return rejectFiel(err);
+            if (results && results.length > 0) {
+              return resolveField(results);
+            } else {
+              return resolveField([]);
+            }
+          }
+        );
+      })
+    );
 
     Promise.all(listCheck)
       .then(([
         listFieldOrderan,
         listFieldTransMasukD,
+        listFieldTransKeluarD,
       ]) => {
         const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("ISRESERVASI") > -1;
         const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
         const chkOrderanNilaiKeterangan =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIKETERANGAN") > -1;
         const chkOrderanTglReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
         const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
+        const chkTransKeluarDIDPR =  listFieldTransKeluarD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
         const listPromise: Promise<void>[] = [];
         
         if (!chkOrderanIsReservasi) {
@@ -790,6 +807,17 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE pos_transkasmasukd ADD COLUMN idpr INT(11) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkTransKeluarDIDPR) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_transkaskeluard ADD COLUMN idpr INT(11) DEFAULT NULL;`;
               myconn.query(querySendTo, (err) => {
                 if (err) return rejectTabel(err);
                 return resolveTabel();
@@ -2152,7 +2180,7 @@ const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[]
 
                   const promisesDetail = el.detail.map(dt => {
                     return new Promise<void>((resolveInsertTransKasMasukDetail, rejectInsertTransKasMasukDetail) => {
-                      myconn.query("INSERT INTO pos_transkasmasukd (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (errInsertTransKasMasukDetail) => {
+                      myconn.query("INSERT INTO pos_transkasmasukd (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan, idpr) VALUE (?,?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan, dt.idpr], (errInsertTransKasMasukDetail) => {
                         if (errInsertTransKasMasukDetail) return rejectInsertTransKasMasukDetail(errInsertTransKasMasukDetail);
                         else return resolveInsertTransKasMasukDetail();
                       });
@@ -2162,7 +2190,7 @@ const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[]
                   Promise.all<void>(promisesDetail)
                   .then(() => {
                     return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
-                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi='outlet-3d1kj1troelu2bvn0u' AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [], (err, results) => {
+                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
                         if(err) return rejecCekCOA(err);
                         if(results?.length > 0){
                             const [{coaKas}] = results;
@@ -2272,7 +2300,7 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
 
                   const promisesDetail = el.detail.map(dt => {
                     return new Promise<void>((resolveInsertTransKasKeluarDetail, rejectInsertTransKasKeluarDetail) => {
-                      myconn.query("INSERT INTO pos_transkaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan], (errInsertTransKasKeluarDetail) => {
+                      myconn.query("INSERT INTO pos_transkaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan, idpr) VALUE (?,?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan, dt.idpr], (errInsertTransKasKeluarDetail) => {
                         if (errInsertTransKasKeluarDetail) return rejectInsertTransKasKeluarDetail(errInsertTransKasKeluarDetail);
                         else return resolveInsertTransKasKeluarDetail();
                       });
@@ -2282,7 +2310,7 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
                   Promise.all<void>(promisesDetail)
                   .then(() => {
                     return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
-                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi='outlet-3d1kj1troelu2bvn0u' AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [], (err, results) => {
+                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
                         if(err) return rejecCekCOA(err);
                         if(results?.length > 0){
                             const [{coaKas}] = results;

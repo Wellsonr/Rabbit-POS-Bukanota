@@ -121,6 +121,8 @@ interface TransaksiPaymentItem {
   variant?: TransaksiVariant
   qtyVoid?: number
   [others: string]: any
+  poin?: number
+  totalPoin?: number
 }
 
 interface TransaksiPaymentDetail {
@@ -166,6 +168,7 @@ interface Transaksi {
   nomeja: string
   nomejaint: number
   namacustomer: string
+  hpcustomer: string
   keterangan: string
   detail: TransaksiDetail[]
   captainOrder: CaptainOrder[]
@@ -757,8 +760,8 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         const chkOrderanTglReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
         const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
         const chkTransKeluarDIDPR =  listFieldTransKeluarD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
+        const chkOrderanHpCust =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("HPCUSTOMER") > -1;
         const listPromise: Promise<void>[] = [];
-        
         if (!chkOrderanIsReservasi) {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
@@ -818,6 +821,18 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE pos_transkaskeluard ADD COLUMN idpr INT(11) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        
+        if (!chkOrderanHpCust) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_orderan ADD COLUMN hpcustomer VARCHAR(20) DEFAULT NULL;`;
               myconn.query(querySendTo, (err) => {
                 if (err) return rejectTabel(err);
                 return resolveTabel();
@@ -997,6 +1012,7 @@ const processOrderanERP = (
   tanggal: string,
   nomeja: string,
   namacustomer: string,
+  hpcustomer: string,
   keterangan: string,
   userin: string,
   userupt: string,
@@ -1026,7 +1042,7 @@ const processOrderanERP = (
     const memberAddress = member ? member.alamat : undefined
     const memberPhone = member ? member.nohandphone : undefined
     const memberZona = member ? member.zona : undefined
-    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi], (err) => {
+    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, hpcustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer,hpcustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi], (err) => {
       if (err) return reject(err)
       return resolve()
     })
@@ -1610,7 +1626,85 @@ const processPaymentERP = (myconn: Connection, kodeoutlet: string, payment: Tran
   })
 }
 
-
+const processPoin = (
+  myconn: Connection,
+  kodeoutlet: string,
+  hpcustomer: string ,
+  noinvoice: string,
+  payment: TransaksiPayment[],
+  lastJamBayar: string
+  ) => {
+    return new Promise<void>((resolve, reject) => {
+      if (payment && hpcustomer) {
+        const tanggal = moment(lastJamBayar).format("YYYY-MM-DD HH:mm:ss");
+    
+        const deletePromise = new Promise<void>((resolveDelete, rejectDelete) => {
+          const paymentNotrans = `PAYMENTPOIN-${noinvoice}`;
+            myconn.query(
+              "DELETE FROM tbltranspoin WHERE notrans IN (?, ?) AND kodeoutlet = ?",
+              [noinvoice, paymentNotrans, kodeoutlet], (deleteErr) => {
+                if (deleteErr) return rejectDelete(deleteErr);
+                return resolveDelete();
+              });
+            });
+    
+        deletePromise.then(() => {
+          const hasil = payment.map((el) => {
+            return new Promise<void>((resolvePoin, rejectPoin) => {
+              const paymentMasukPromises = el.item.map((el2) => {
+                return new Promise<void>((resolvePoinItem, rejectPoinItem) => {
+                  if (el2?.totalPoin > 0) {
+                    myconn.query(
+                      "INSERT INTO tbltranspoin (notrans, kodeoutlet, kodecust, kodebarang, qty, poin, jumlah_poin, tanggal) VALUE (?, ?, ?, ?, ?, ?, ?, ?)",
+                      [noinvoice, kodeoutlet, hpcustomer, el2.kodebarang, el2.qty, el2.poin, el2.totalPoin, tanggal],
+                      (err) => {
+                        if (err) return rejectPoinItem(err);
+                        return resolvePoinItem();
+                      }
+                    );
+                  } else {
+                    return resolvePoinItem();
+                  }
+                });
+              });
+    
+              const paymentPotongPromises = el.payment.map((el2) => {
+                return new Promise<void>((resolvePoinItem, rejectPoinItem) => {
+                  if (el2?.kodepayment === "POTONGANPOIN" && el2?.poin > 0) {
+                    myconn.query(
+                      "INSERT INTO tbltranspoin (notrans, kodeoutlet, kodecust, kodebarang, qty, poin, jumlah_poin, tanggal) VALUE (?, ?, ?, ?, ?, ?, ?, ?)",
+                      [`PAYMENTPOIN-${noinvoice}`, kodeoutlet, hpcustomer, el2.kodepayment, -1, el2.poin * -1, el2.poin * -1, tanggal],
+                      (err) => {
+                        if (err) return rejectPoinItem(err);
+                        return resolvePoinItem();
+                      }
+                    );
+                  } else {
+                    return resolvePoinItem();
+                  }
+                });
+              });
+    
+              Promise.all([
+                ...paymentMasukPromises, 
+                ...paymentPotongPromises,
+              ])
+                .then(() => resolvePoin())
+                .catch(rejectPoin);
+            });
+          });
+    
+          Promise.all(hasil)
+            .then(() => resolve())
+            .catch(reject);
+        }).catch(reject);
+      } else {
+        return resolve();
+      }
+    });
+    
+    
+}
 const convertPhone = (val: string) => {
   let handphone = val
   if (val.match(/^\+62/)) handphone = val.replace(/^\+62/, '0')
@@ -1996,6 +2090,7 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                         el.tanggal,
                         el.nomeja,
                         el.namacustomer,
+                        el.nohp,
                         el.keterangan,
                         el.userin,
                         el.userupt,
@@ -2019,7 +2114,11 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                         return processItemERP(myconn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listSubkategori, listBarang, listTopping)
                       }).then(() => {
                         return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
-                      }).then(() => {
+                      })
+                      .then(() => {
+                        return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
+                      })
+                      .then(() => {
                         return resolve();
                       }).catch(err => {
                         console.log("Error", err)

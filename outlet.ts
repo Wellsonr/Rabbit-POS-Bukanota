@@ -747,12 +747,44 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         );
       })
     );
+    listCheck.push(
+      new Promise<any[]>((resolveField, rejectFiel) => {
+        myconn.query(
+          "SHOW COLUMNS FROM tblbiaya",
+          (err, results) => {
+            if (err) return rejectFiel(err);
+            if (results && results.length > 0) {
+              return resolveField(results);
+            } else {
+              return resolveField([]);
+            }
+          }
+        );
+      })
+    );
+    listCheck.push(
+      new Promise<any[]>((resolveField, rejectFiel) => {
+        myconn.query(
+          "SHOW COLUMNS FROM tblbiayad",
+          (err, results) => {
+            if (err) return rejectFiel(err);
+            if (results && results.length > 0) {
+              return resolveField(results);
+            } else {
+              return resolveField([]);
+            }
+          }
+        );
+      })
+    );
 
     Promise.all(listCheck)
       .then(([
         listFieldOrderan,
         listFieldTransMasukD,
         listFieldTransKeluarD,
+        listFieldBiaya,
+        listFieldBiayaD,
       ]) => {
         const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("ISRESERVASI") > -1;
         const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
@@ -761,6 +793,8 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
         const chkTransKeluarDIDPR =  listFieldTransKeluarD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
         const chkOrderanHpCust =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("HPCUSTOMER") > -1;
+        const chkBiayaIdTransPOS =  listFieldBiaya.map((el) => el.Field.toUpperCase()).indexOf("IDTRANSPOS") > -1;
+        const chkBiayaDIdTransPOS =  listFieldBiayaD.map((el) => el.Field.toUpperCase()).indexOf("IDTRANSPOS") > -1;
         const listPromise: Promise<void>[] = [];
         if (!chkOrderanIsReservasi) {
           listPromise.push(
@@ -833,6 +867,29 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE pos_orderan ADD COLUMN hpcustomer VARCHAR(20) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        
+        if (!chkBiayaIdTransPOS) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE tblbiaya ADD COLUMN idtransPOS VARCHAR(200) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkBiayaDIdTransPOS) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE tblbiayad ADD COLUMN idtransPOS VARCHAR(200) DEFAULT NULL;`;
               myconn.query(querySendTo, (err) => {
                 if (err) return rejectTabel(err);
                 return resolveTabel();
@@ -2364,17 +2421,33 @@ const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[]
 };
 
 
-const hapusPreviousKasKeluarERP = (myconn: Connection, kodeoutlet: string, listTrans: string[]) => {
+const hapusPreviousKasKeluarERP = (myconn: Connection, kodeoutlet: string, listTrans: string[]): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
-    myconn.query("DELETE FROM pos_transkaskeluar WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
-      if (err) return reject(err)
-      myconn.query("DELETE FROM pos_transkaskeluard WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, listTrans], (err) => {
-        if (err) return reject(err)
-        return resolve()
+    const queries = [
+      "DELETE FROM pos_transkaskeluar WHERE kodeoutlet = ? AND idtrans IN (?)",
+      "DELETE FROM pos_transkaskeluard WHERE kodeoutlet = ? AND idtrans IN (?)",
+      "DELETE FROM tblbiaya WHERE department = ? AND idtransPOS IN (?)",
+      "DELETE FROM tblbiayad WHERE department = ? AND idtransPOS IN (?)"
+    ];
+
+    const promises = queries.map(query => {
+      return new Promise<void>((resolve, reject) => {
+        myconn.query(query, [kodeoutlet, listTrans], (err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+    });
+
+    Promise.all(promises)
+      .then(() => {
+        resolve();
       })
-    })
-  })
-}
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 
 
 const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas[], kodeoutlet: string) => {
@@ -2394,9 +2467,10 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
               return new Promise<void>((resolveInsertTransKasKeluar, rejectInsertTransKasKeluar) => {
                 const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
                 const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined;
+                const ketrans = `Kas Keluar Kasir`;
+                const notrans= `transkaskeluar-${el.noinvoice}-${kodeoutlet}`;
                 myconn.query("INSERT INTO pos_transkaskeluar (kodeoutlet, idtrans, noinvoice, sessionId, userin, jamin, tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (errInsertTransKasKeluar) => {
                   if (errInsertTransKasKeluar) return rejectInsertTransKasKeluar(errInsertTransKasKeluar);
-
                   const promisesDetail = el.detail.map(dt => {
                     return new Promise<void>((resolveInsertTransKasKeluarDetail, rejectInsertTransKasKeluarDetail) => {
                       myconn.query("INSERT INTO pos_transkaskeluard (kodeoutlet, idtrans, noinvoice, kodebiaya, namabiaya, amount, keterangan, idpr) VALUE (?,?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, dt.kodebiaya, dt.namabiaya, dt.amount, dt.keterangan, dt.idpr], (errInsertTransKasKeluarDetail) => {
@@ -2406,7 +2480,9 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
                     });
                   });
 
-                  Promise.all<void>(promisesDetail)
+                  Promise.all<void>([
+                    ...promisesDetail
+                  ])
                   .then(() => {
                     return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
                       myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
@@ -2420,10 +2496,40 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
                       });
                     })
                   })
+                  .then((coaKas) => {
+                    return new Promise<number>((resolveTblBiaya, rejectTblBiaya) => {
+                      myconn.query('INSERT INTO tblbiaya (notrans, tanggal, ccy, idpr, keterangan, cashchequeno, custid, userin, userupt, jam, jamupt, status, department, kursh, tanggalcheque, idtransPOS) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), 20, ?, ?, ?,?)', [notrans, tanggal, "IDR", coaKas, ketrans, "-", "KASIR-OUTLET",  el.userin,  el.userin, kodeoutlet, 1, tanggal, el._id, 20],
+                        (err) => {
+                          if (err) return rejectTblBiaya(err);
+                          resolveTblBiaya(coaKas);
+                        }
+                      );
+                    })
+                  })
+                  .then((coaKas) => {
+                    return new Promise<number>((resolveTblBiayaD, rejectTblBiayaD) => {
+                      const promisesDetail = el.detail.map(dt => {
+                        console.log(dt)
+                        return new Promise<void>((resolveTblBiayaDInsert, rejectTblBiayaDInsert) => {
+                          // myconn.query(`INSERT INTO tblbiayad (notrans, coaccid, amount, kurs, nopo, qty, unit, kodevehicle, sales, userin, userupt, jam, jamupt, keterangan, kodeprojectbaru, status, kodepaymentd, idtransPOS, department) VALUES ( ?, ?, ?, 1, "", 1, 1, "GEN0001", "GEN0001", ?, ?, NOW(), NOW(), ?, "GEN0001", ?, 5, ?, ?, ? )`, [notrans, dt.idpr,  dt.amount, el.userin, el.userin, `${dt.namabiaya} ${dt.keterangan}`, '', coaKas, el._id, kodeoutlet],
+                          myconn.query(`INSERT INTO tblbiayad (notrans, coaccid, amount, kurs, nopo, qty, unit, kodevehicle, sales, userin, userupt, jam, jamupt, keterangan, noinvoice, kodeprojectbaru, status, kodepaymentd, idtransPOS, department) VALUES ( ?, ?, ?, 1, "", 1, 1, "GEN0001", "GEN0001", ?, ?, NOW(), NOW(), ?, ?, "GEN0001", 5, ?, ?, ? )`, [notrans, dt.idpr,  dt.amount, el.userin, el.userin, `${dt.namabiaya} ${dt.keterangan}`, '', coaKas, el._id, kodeoutlet],
+                           (err) => {
+                            if (err) return rejectTblBiayaDInsert(err);
+                            else return resolveTblBiayaDInsert();
+                          });
+                        });
+                      });
+    
+                      Promise.all<void>([
+                        ...promisesDetail
+                      ])
+                      .then(() => resolveTblBiayaD(coaKas))
+                      .catch((err) => rejectTblBiayaD(err));
+                    })
+                  })
                     .then((coaKas) => {
                       return new Promise<void>((resolveJurnal, rejectJurnal) => {   
-                        const ketrans = `Kas Keluar Kasir`;
-                        const notrans= `transkaskeluar-${el.noinvoice}-${kodeoutlet}`;
+                        
                         const listDataDetTrans = [];
                         el.detail.map(dt => {
                           const { idpr, namabiaya, amount  } = dt;

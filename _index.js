@@ -4,7 +4,7 @@ const { outlet, idtrans, tanggal, kas, kastanggal } = require('./outlet')
 const { welcomeMail, deleteMail } = require('./mailing')
 const { prosesSettlement } = require('./passti')
 require('dotenv').config();
-const QUEUE_NAME = `homanpos`
+const QUEUE_NAME = `bukanota_pos`
 const TRANSAKSI = 'transaksi'
 const EMAILOUTLET = "EMAILOUTLET"
 const HAPUSOUTLET = 'HAPUSOUTLET'

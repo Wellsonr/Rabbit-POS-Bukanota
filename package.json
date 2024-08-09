@@ -1,5 +1,5 @@
 {
-  "name": "homanpos-execute",
+  "name": "bukanota_pos-execute",
   "version": "1.0.0",
   "description": "Homan POS on running queue",
   "main": "index.js",

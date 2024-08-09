@@ -5,7 +5,7 @@ return mysql.createConnection({
     host: dbhost,
     user: dbuser,
     password: dbpwd,
-    database: dbname || 'homanpos',
+    database: dbname || 'bukanota_pos',
     timezone: 'Z+7',
     multipleStatements: true,
     charset: "utf8mb4"

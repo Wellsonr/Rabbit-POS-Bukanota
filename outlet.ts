@@ -32,6 +32,11 @@ interface Session {
   userTutup?: string
   tanggalTutup?: string
   saldoAkhir?: number
+  saldoKasMasuk?: number
+  saldoKasKeluar?: number
+  saldoPenjualanCash?: number
+  saldoPenjualanNonCash?: number
+  selisihSaldo?: number
   [others: string]: any
 }
 
@@ -778,6 +783,22 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
       })
     );
 
+    listCheck.push(
+      new Promise<any[]>((resolveField, rejectFiel) => {
+        myconn.query(
+          "SHOW COLUMNS FROM pos_session",
+          (err, results) => {
+            if (err) return rejectFiel(err);
+            if (results && results.length > 0) {
+              return resolveField(results);
+            } else {
+              return resolveField([]);
+            }
+          }
+        );
+      })
+    );
+
     Promise.all(listCheck)
       .then(([
         listFieldOrderan,
@@ -785,6 +806,7 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         listFieldTransKeluarD,
         listFieldBiaya,
         listFieldBiayaD,
+        listFieldSessionPOS,
       ]) => {
         const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("ISRESERVASI") > -1;
         const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
@@ -795,6 +817,15 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         const chkOrderanHpCust =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("HPCUSTOMER") > -1;
         const chkBiayaIdTransPOS =  listFieldBiaya.map((el) => el.Field.toUpperCase()).indexOf("IDTRANSPOS") > -1;
         const chkBiayaDIdTransPOS =  listFieldBiayaD.map((el) => el.Field.toUpperCase()).indexOf("IDTRANSPOS") > -1;
+        const chkSessionSaldoKasMasuk =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOKASMASUK") > -1;
+        const chkSessionSaldoKasKeluar =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOKASKELUAR") > -1;
+        const chkSessionSaldoKasPenjualanCash =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOPENJUALANCASH") > -1;
+        const chkSessionSaldoKasPenjualanNonCash =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOPENJUALANNONCASH") > -1;
+        const chkSessionSelisihSaldo =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SELISIHSALDO") > -1;
+        const chkSessionStatusID =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("STATUSID") > -1;
+        const chkSessionSaldoTerima =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOTERIMA") > -1;
+        const chkSessionuUserTerima =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("USERTERIMA") > -1;
+        const chkSessionuJamTerima =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("JAMTERIMA") > -1;
         const listPromise: Promise<void>[] = [];
         if (!chkOrderanIsReservasi) {
           listPromise.push(
@@ -890,6 +921,105 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE tblbiayad ADD COLUMN idtransPOS VARCHAR(200) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionSaldoKasMasuk) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN saldoKasMasuk DOUBLE DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionSaldoKasKeluar) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN saldoKasKeluar DOUBLE DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionSaldoKasPenjualanCash) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN saldoPenjualanCash DOUBLE DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionSaldoKasPenjualanNonCash) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN saldoPenjualanNonCash DOUBLE DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionSelisihSaldo) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN selisihSaldo DOUBLE DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionStatusID) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN saldoTerima DOUBLE DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionSaldoTerima) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN statusid TINYINT(1) DEFAULT 1;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionuUserTerima) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN userTerima VARCHAR(200) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionuJamTerima) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN jamTerima DATETIME DEFAULT NULL;`;
               myconn.query(querySendTo, (err) => {
                 if (err) return rejectTabel(err);
                 return resolveTabel();
@@ -2273,10 +2403,12 @@ const processSessionERP = (mysqlConfig: MysqlInfo, listSession: Session[], kodeo
           myconn.end()
           return reject(err)
         }
-        hapusPreviousSessionERP(myconn, kodeoutlet, listSession.map(el => el.sessionId)).then(() => {
+        sinkronDBERP(myconn)
+        .then(() => hapusPreviousSessionERP(myconn, kodeoutlet, listSession.map(el => el.sessionId)))
+        .then(() => {
             const hasilProcess = listSession.map(el => {
               return new Promise<void>((resolve, reject) => {
-                myconn.query("INSERT INTO pos_session (kodeoutlet, sessionId, saldoAwal, saldoAkhir, tanggalBuka, tanggalTutup, userBuka, userTutup) VALUES (?,?,?,?,?,?,?,?)", [kodeoutlet, el.sessionId, el.saldoAwal, el.saldoAkhir, moment(el.tanggalBuka).format("YYYY-MM-DD HH:mm:ss"), el.tanggalTutup ? moment(el.tanggalTutup).format("YYYY-MM-DD HH:mm:ss") : undefined, el.userBuka, el.userTutup], (err) => {
+                myconn.query("INSERT INTO pos_session (kodeoutlet, sessionId, saldoAwal, saldoAkhir, tanggalBuka, tanggalTutup, userBuka, userTutup, saldoKasMasuk, saldoKasKeluar, saldoPenjualanCash, saldoPenjualanNonCash, selisihSaldo) VALUES (?,?,?,?,?,?,?,?,?, ?, ?, ?, ?)", [kodeoutlet, el.sessionId, el.saldoAwal, el.saldoAkhir, moment(el.tanggalBuka).format("YYYY-MM-DD HH:mm:ss"), el.tanggalTutup ? moment(el.tanggalTutup).format("YYYY-MM-DD HH:mm:ss") : undefined, el.userBuka, el.userTutup, el.saldoKasMasuk, el.saldoKasKeluar, el.saldoPenjualanCash, el.saldoPenjualanNonCash, el.selisihSaldo], (err) => {
                   if (err) return reject(err)
                   return resolve()
                 })

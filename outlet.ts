@@ -808,24 +808,24 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         listFieldBiayaD,
         listFieldSessionPOS,
       ]) => {
-        const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("ISRESERVASI") > -1;
-        const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
-        const chkOrderanNilaiKeterangan =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("NILAIKETERANGAN") > -1;
-        const chkOrderanTglReservasi =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
-        const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
-        const chkTransKeluarDIDPR =  listFieldTransKeluarD.map((el) => el.Field.toUpperCase()).indexOf("IDPR") > -1;
-        const chkOrderanHpCust =  listFieldOrderan.map((el) => el.Field.toUpperCase()).indexOf("HPCUSTOMER") > -1;
-        const chkBiayaIdTransPOS =  listFieldBiaya.map((el) => el.Field.toUpperCase()).indexOf("IDTRANSPOS") > -1;
-        const chkBiayaDIdTransPOS =  listFieldBiayaD.map((el) => el.Field.toUpperCase()).indexOf("IDTRANSPOS") > -1;
-        const chkSessionSaldoKasMasuk =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOKASMASUK") > -1;
-        const chkSessionSaldoKasKeluar =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOKASKELUAR") > -1;
-        const chkSessionSaldoKasPenjualanCash =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOPENJUALANCASH") > -1;
-        const chkSessionSaldoKasPenjualanNonCash =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOPENJUALANNONCASH") > -1;
-        const chkSessionSelisihSaldo =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SELISIHSALDO") > -1;
-        const chkSessionStatusID =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("STATUSID") > -1;
-        const chkSessionSaldoTerima =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("SALDOTERIMA") > -1;
-        const chkSessionuUserTerima =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("USERTERIMA") > -1;
-        const chkSessionuJamTerima =  listFieldSessionPOS.map((el) => el.Field.toUpperCase()).indexOf("JAMTERIMA") > -1;
+        const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("ISRESERVASI") > -1;
+        const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
+        const chkOrderanNilaiKeterangan =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("NILAIKETERANGAN") > -1;
+        const chkOrderanTglReservasi =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
+        const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field?.toUpperCase()).indexOf("IDPR") > -1;
+        const chkTransKeluarDIDPR =  listFieldTransKeluarD.map((el) => el.Field?.toUpperCase()).indexOf("IDPR") > -1;
+        const chkOrderanHpCust =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("HPCUSTOMER") > -1;
+        const chkBiayaIdTransPOS =  listFieldBiaya.map((el) => el.Field?.toUpperCase()).indexOf("IDTRANSPOS") > -1;
+        const chkBiayaDIdTransPOS =  listFieldBiayaD.map((el) => el.Field?.toUpperCase()).indexOf("IDTRANSPOS") > -1;
+        const chkSessionSaldoKasMasuk =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOKASMASUK") > -1;
+        const chkSessionSaldoKasKeluar =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOKASKELUAR") > -1;
+        const chkSessionSaldoKasPenjualanCash =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOPENJUALANCASH") > -1;
+        const chkSessionSaldoKasPenjualanNonCash =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOPENJUALANNONCASH") > -1;
+        const chkSessionSelisihSaldo =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SELISIHSALDO") > -1;
+        const chkSessionStatusID =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("STATUSID") > -1;
+        const chkSessionSaldoTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOTERIMA") > -1;
+        const chkSessionuUserTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("USERTERIMA") > -1;
+        const chkSessionuJamTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("JAMTERIMA") > -1;
         const listPromise: Promise<void>[] = [];
         if (!chkOrderanIsReservasi) {
           listPromise.push(
@@ -1245,11 +1245,11 @@ const processCaptainOrder = (conn: Connection, kodeoutlet: string, captainOrder:
             if (err) return (reject(err))
             const listDetail = el.item.map(el2 => {
               return new Promise<void>((resolve, reject) => {
-                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang?.toUpperCase()).indexOf(el2.kodebarang?.toUpperCase()) > -1)
                 const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
                 const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
-                const dataBarang = detail.find(el => el.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+                const dataBarang = detail.find(el => el.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase())
                 const harga = dataBarang && dataBarang.harga ? dataBarang.harga : 0;
                 const discountPercent = dataBarang && dataBarang.discountPercent ? dataBarang.discountPercent : 0;
                 const jumlah = (el2.qty * harga) * (100 - discountPercent) / 100
@@ -1261,9 +1261,9 @@ const processCaptainOrder = (conn: Connection, kodeoutlet: string, captainOrder:
                   if (listOrderTopping.length > 0) {
                     const topping = listOrderTopping.map(top => {
                       return new Promise<void>((resolve, reject) => {
-                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                         const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         conn.query("INSERT INTO tblorderancod (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,isPaket,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, 0, el2.index, true, false, el2.kodebarang, el2.namabarang], (err => {
                           if (err) return reject(err)
@@ -1297,11 +1297,11 @@ const processCaptainOrder = (conn: Connection, kodeoutlet: string, captainOrder:
             }
             const listPaket = listItemPaket.map(el2 => {
               return new Promise<void>((resolve, reject) => {
-                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang?.toUpperCase()).indexOf(el2.kodebarang?.toUpperCase()) > -1)
                 const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
                 const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
-                const dataBarang = detail.find(el => el.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+                const dataBarang = detail.find(el => el.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase())
                 const harga = dataBarang && dataBarang.harga ? dataBarang.harga : 0;
                 const discountPercent = dataBarang && dataBarang.discountPercent ? dataBarang.discountPercent : 0;
                 const jumlah = (el2.qty * harga) * (100 - discountPercent) / 100
@@ -1312,9 +1312,9 @@ const processCaptainOrder = (conn: Connection, kodeoutlet: string, captainOrder:
                   if (listOrderTopping.length > 0) {
                     const topping = listOrderTopping.map(top => {
                       return new Promise<void>((resolve, reject) => {
-                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                         const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         conn.query("INSERT INTO tblorderancodpaket (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, kodepaket) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, el2.index, true, false, el2.kodebarang, el2.namabarang, kodepaket], (err => {
                           if (err) return reject(err)
@@ -1357,11 +1357,11 @@ const processCaptainOrderERP = (myconn: Connection, kodeoutlet: string, captainO
             if (err) return (reject(err))
             const listDetail = el.item.map(el2 => {
               return new Promise<void>((resolve, reject) => {
-                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang?.toUpperCase()).indexOf(el2.kodebarang?.toUpperCase()) > -1)
                 const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
                 const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
-                const dataBarang = detail.find(el => el.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+                const dataBarang = detail.find(el => el.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase())
                 const harga = dataBarang && dataBarang.harga ? dataBarang.harga : 0;
                 const discountPercent = dataBarang && dataBarang.discountPercent ? dataBarang.discountPercent : 0;
                 const jumlah = (el2.qty * harga) * (100 - discountPercent) / 100
@@ -1373,9 +1373,9 @@ const processCaptainOrderERP = (myconn: Connection, kodeoutlet: string, captainO
                   if (listOrderTopping.length > 0) {
                     const topping = listOrderTopping.map(top => {
                       return new Promise<void>((resolve, reject) => {
-                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                         const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         myconn.query("INSERT INTO pos_orderancod (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,isPaket,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, 0, el2.index, true, false, el2.kodebarang, el2.namabarang], (err => {
                           if (err) return reject(err)
@@ -1409,11 +1409,11 @@ const processCaptainOrderERP = (myconn: Connection, kodeoutlet: string, captainO
             }
             const listPaket = listItemPaket.map(el2 => {
               return new Promise<void>((resolve, reject) => {
-                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang?.toUpperCase()).indexOf(el2.kodebarang?.toUpperCase()) > -1)
                 const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
                 const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
-                const dataBarang = detail.find(el => el.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+                const dataBarang = detail.find(el => el.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase())
                 const harga = dataBarang && dataBarang.harga ? dataBarang.harga : 0;
                 const discountPercent = dataBarang && dataBarang.discountPercent ? dataBarang.discountPercent : 0;
                 const jumlah = (el2.qty * harga) * (100 - discountPercent) / 100
@@ -1424,9 +1424,9 @@ const processCaptainOrderERP = (myconn: Connection, kodeoutlet: string, captainO
                   if (listOrderTopping.length > 0) {
                     const topping = listOrderTopping.map(top => {
                       return new Promise<void>((resolve, reject) => {
-                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                         const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         myconn.query("INSERT INTO pos_orderancodpaket (kodeoutlet,idtrans,noinvoice,urutco, kodebarang,namabarang,qty, harga,discountPercent, jumlah,kodesubkategori, namasubkategori,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, kodepaket) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, top.kodetopping, top.namatopping, el2.qty * top.qty, top.harga, 0, (el2.qty * top.qty) * top.harga, kodesubkategoritop, namasubkategoritop, el2.index, true, false, el2.kodebarang, el2.namabarang, kodepaket], (err => {
                           if (err) return reject(err)
@@ -1466,12 +1466,12 @@ const processItem = (conn: Connection, kodeoutlet: string, detail: TransaksiDeta
     if (detail) {
       const item = detail.map(el => {
         return new Promise<void>((resolve, reject) => {
-          const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang.toUpperCase()).indexOf(el.kodebarang.toUpperCase()) > -1)
+          const barang = listBarang.find(el2 => el2.kodebarang?.toUpperCase() === el.kodebarang?.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang?.toUpperCase()).indexOf(el.kodebarang?.toUpperCase()) > -1)
           const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
-          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategori?.toUpperCase()) : null
           const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
           const kodesubkategori = el.kodesubkatgori ? el.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
           const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
           const isPaket = el.detail && el.detail.length > 0 || false
           const isPromo = el.isPromo != null ? el.isPromo : false
@@ -1483,12 +1483,12 @@ const processItem = (conn: Connection, kodeoutlet: string, detail: TransaksiDeta
             if (listOrderTopping.length > 0) {
               const topping = listOrderTopping.map(top => {
                 return new Promise<void>((resolve, reject) => {
-                  const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                  const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                   const kodekategoritop = topping && topping.kodekategori ? topping.kodekategori : null
-                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategoritop.toUpperCase()) : null
+                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategoritop?.toUpperCase()) : null
                   const namakategoritop = kategoritop && kategoritop.namakategori ? kategoritop.namakategori : null
                   const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                   const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                   conn.query("INSERT INTO tblorderand (kodeoutlet,idtrans,noinvoice,kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang,namabarang,qty,discountPercent, discountAmount, harga, jumlah,isPaket,isPromo,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategoritop, namakategoritop, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el.qty, 0, 0, top.harga, (el.qty * top.qty) * top.harga, 0, 0, el.index, true, false, el.kodebarang, el.namabarang, top.qty * qtyVoid], (err => {
                     if (err) return reject(err)
@@ -1523,12 +1523,12 @@ const processItem = (conn: Connection, kodeoutlet: string, detail: TransaksiDeta
       }
       const listPaket = listItemPaket.map(el => {
         return new Promise<void>((resolve, reject) => {
-          const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang.toUpperCase()).indexOf(el.kodebarang.toUpperCase()) > -1)
+          const barang = listBarang.find(el2 => el2.kodebarang?.toUpperCase() === el.kodebarang?.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang?.toUpperCase()).indexOf(el.kodebarang?.toUpperCase()) > -1)
           const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
-          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategori?.toUpperCase()) : null
           const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
           const kodesubkategori = el.kodesubkatgori ? el.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
           const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
           const kodepaket = el.kodepaket ? el.kodepaket : null
           const isPromo = el.isPromo != null ? el.isPromo : false
@@ -1540,12 +1540,12 @@ const processItem = (conn: Connection, kodeoutlet: string, detail: TransaksiDeta
             if (listOrderTopping.length > 0) {
               const topping = listOrderTopping.map(top => {
                 return new Promise<void>((resolve, reject) => {
-                  const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                  const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                   const kodekategoritop = topping && topping.kodekategori ? topping.kodekategori : null
-                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategoritop.toUpperCase()) : null
+                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategoritop?.toUpperCase()) : null
                   const namakategoritop = kategoritop && kategoritop.namakategori ? kategoritop.namakategori : null
                   const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                   const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                   conn.query("INSERT INTO tblorderandpaket (kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang, namabarang, qty, discountPercent, discountAmount, harga, jumlah, kodepaket, isPromo, `index`, isVariant, isTopping,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategoritop, namakategoritop, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el.qty, 0, 0, top.harga, (el.qty * top.qty) * top.harga, kodepaket, 0, el.index, false, true, el.kodebarang, el.namabarang, top.qty * qtyVoid], (err => {
                     if (err) return reject(err)
@@ -1575,12 +1575,12 @@ const processItemERP = (conn: Connection, kodeoutlet: string, detail: TransaksiD
     if (detail) {
       const item = detail.map(el => {
         return new Promise<void>((resolve, reject) => {
-          const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang.toUpperCase()).indexOf(el.kodebarang.toUpperCase()) > -1)
+          const barang = listBarang.find(el2 => el2.kodebarang?.toUpperCase() === el.kodebarang?.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang?.toUpperCase()).indexOf(el.kodebarang?.toUpperCase()) > -1)
           const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
-          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategori?.toUpperCase()) : null
           const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
           const kodesubkategori = el.kodesubkatgori ? el.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
           const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
           const isPaket = el.detail && el.detail.length > 0 || false
           const isPromo = el.isPromo != null ? el.isPromo : false
@@ -1592,12 +1592,12 @@ const processItemERP = (conn: Connection, kodeoutlet: string, detail: TransaksiD
             if (listOrderTopping.length > 0) {
               const topping = listOrderTopping.map(top => {
                 return new Promise<void>((resolve, reject) => {
-                  const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                  const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                   const kodekategoritop = topping && topping.kodekategori ? topping.kodekategori : null
-                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategoritop.toUpperCase()) : null
+                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategoritop?.toUpperCase()) : null
                   const namakategoritop = kategoritop && kategoritop.namakategori ? kategoritop.namakategori : null
                   const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                   const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                   conn.query("INSERT INTO pos_orderand (kodeoutlet,idtrans,noinvoice,kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang,namabarang,qty,discountPercent, discountAmount, harga, jumlah,isPaket,isPromo,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategoritop, namakategoritop, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el.qty, 0, 0, top.harga, (el.qty * top.qty) * top.harga, 0, 0, el.index, true, false, el.kodebarang, el.namabarang, top.qty * qtyVoid], (err => {
                     if (err) return reject(err)
@@ -1632,12 +1632,12 @@ const processItemERP = (conn: Connection, kodeoutlet: string, detail: TransaksiD
       }
       const listPaket = listItemPaket.map(el => {
         return new Promise<void>((resolve, reject) => {
-          const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang.toUpperCase()).indexOf(el.kodebarang.toUpperCase()) > -1)
+          const barang = listBarang.find(el2 => el2.kodebarang?.toUpperCase() === el.kodebarang?.toUpperCase() || (el2.variant || []).map(el3 => el3.kodebarang?.toUpperCase()).indexOf(el.kodebarang?.toUpperCase()) > -1)
           const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
-          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+          const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategori?.toUpperCase()) : null
           const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
           const kodesubkategori = el.kodesubkatgori ? el.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+          const subkategori = kodesubkategori ? listSubkategori.find(el2 => el2.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
           const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
           const kodepaket = el.kodepaket ? el.kodepaket : null
           const isPromo = el.isPromo != null ? el.isPromo : false
@@ -1649,12 +1649,12 @@ const processItemERP = (conn: Connection, kodeoutlet: string, detail: TransaksiD
             if (listOrderTopping.length > 0) {
               const topping = listOrderTopping.map(top => {
                 return new Promise<void>((resolve, reject) => {
-                  const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                  const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                   const kodekategoritop = topping && topping.kodekategori ? topping.kodekategori : null
-                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategoritop.toUpperCase()) : null
+                  const kategoritop = kodekategoritop ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategoritop?.toUpperCase()) : null
                   const namakategoritop = kategoritop && kategoritop.namakategori ? kategoritop.namakategori : null
                   const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                  const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                   const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                   conn.query("INSERT INTO pos_orderandpaket (kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, kodesubkategori, namasubkategori, kodebarang, namabarang, qty, discountPercent, discountAmount, harga, jumlah, kodepaket, isPromo, `index`, isVariant, isTopping,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategoritop, namakategoritop, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el.qty, 0, 0, top.harga, (el.qty * top.qty) * top.harga, kodepaket, 0, el.index, false, true, el.kodebarang, el.namabarang, top.qty * qtyVoid], (err => {
                     if (err) return reject(err)
@@ -1688,9 +1688,9 @@ const processPayment = (conn: Connection, kodeoutlet: string, payment: Transaksi
             if (err) return reject(err)
             const paymentItem = el.item.map(el2 => {
               return new Promise<void>((resolve, reject) => {
-                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang?.toUpperCase()).indexOf(el2.kodebarang?.toUpperCase()) > -1)
                 const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
                 const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
                 const isPromo = el2.isPromo != null ? el2.isPromo : false
                 const isVariant = el2.isVariant != null ? el2.isVariant : false
@@ -1701,9 +1701,9 @@ const processPayment = (conn: Connection, kodeoutlet: string, payment: Transaksi
                   if (listOrderTopping.length > 0) {
                     const topping = listOrderTopping.map(top => {
                       return new Promise<void>((resolve, reject) => {
-                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                         const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         conn.query("INSERT INTO tblorderanpaymentitem (kodeoutlet,idtrans,noinvoice,urutpayment,kodesubkategori,namasubkategori,kodebarang,namabarang,qty,discountPercent,discountAmount,harga,jumlah,isPromo,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el2.qty, 0, 0, top.harga, (el2.qty * top.qty) * top.harga, 0, el2.index, true, false, el2.kodebarang, el2.namabarang, top.qty * qtyVoid], (err) => {
                           if (err) return reject(err)
@@ -1718,7 +1718,7 @@ const processPayment = (conn: Connection, kodeoutlet: string, payment: Transaksi
             })
             const paymentDetail = el.payment.map((el2) => {
               return new Promise<void>((resolve, reject) => {
-                const payment = listPayment.find(el3 => el3.kodepayment.toUpperCase() === el2.kodepayment.toUpperCase())
+                const payment = listPayment.find(el3 => el3.kodepayment?.toUpperCase() === el2.kodepayment?.toUpperCase())
                 const isCard = payment && payment.isCard ? payment.isCard : false
                 const isCashlez = payment && payment.isCashlez ? payment.isCashlez : false
                 const isQREN = payment && payment.isQREN ? payment.isQREN : false
@@ -1755,9 +1755,9 @@ const processPaymentERP = (myconn: Connection, kodeoutlet: string, payment: Tran
             if (err) return reject(err)
             const paymentItem = el.item.map(el2 => {
               return new Promise<void>((resolve, reject) => {
-                const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang.toUpperCase()).indexOf(el2.kodebarang.toUpperCase()) > -1)
+                const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase() || (el3.variant || []).map(el4 => el4.kodebarang?.toUpperCase()).indexOf(el2.kodebarang?.toUpperCase()) > -1)
                 const kodesubkategori = el2.kodesubkatgori ? el2.kodesubkategori : barang && barang.kodesubkategori ? barang.kodesubkategori : null
-                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategori.toUpperCase()) : null
+                const subkategori = kodesubkategori ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategori?.toUpperCase()) : null
                 const namasubkategori = subkategori && subkategori.namasubkategori ? subkategori.namasubkategori : null
                 const isPromo = el2.isPromo != null ? el2.isPromo : false
                 const isVariant = el2.isVariant != null ? el2.isVariant : false
@@ -1768,9 +1768,9 @@ const processPaymentERP = (myconn: Connection, kodeoutlet: string, payment: Tran
                   if (listOrderTopping.length > 0) {
                     const topping = listOrderTopping.map(top => {
                       return new Promise<void>((resolve, reject) => {
-                        const topping = listTopping.find(tp => tp.kodetopping.toUpperCase() === top.kodetopping.toUpperCase())
+                        const topping = listTopping.find(tp => tp.kodetopping?.toUpperCase() === top.kodetopping?.toUpperCase())
                         const kodesubkategoritop = topping && topping.kodesubkategori ? topping.kodesubkategori : null
-                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori.toUpperCase() === kodesubkategoritop.toUpperCase()) : null
+                        const subkategoritop = kodesubkategoritop ? listSubkategori.find(el3 => el3.kodesubkategori?.toUpperCase() === kodesubkategoritop?.toUpperCase()) : null
                         const namasubkategoritop = subkategoritop && subkategoritop.namasubkategori ? subkategoritop.namasubkategori : null
                         myconn.query("INSERT INTO pos_orderanpaymentitem (kodeoutlet,idtrans,noinvoice,urutpayment,kodesubkategori,namasubkategori,kodebarang,namabarang,qty,discountPercent,discountAmount,harga,jumlah,isPromo,`index`,isTopping,isVariant,kodebarangtopping,namabarangtopping, qtyVoid) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, kodesubkategoritop, namasubkategoritop, top.kodetopping, top.namatopping, top.qty * el2.qty, 0, 0, top.harga, (el2.qty * top.qty) * top.harga, 0, el2.index, true, false, el2.kodebarang, el2.namabarang, top.qty * qtyVoid], (err) => {
                           if (err) return reject(err)
@@ -1785,7 +1785,7 @@ const processPaymentERP = (myconn: Connection, kodeoutlet: string, payment: Tran
             })
             const paymentDetail = el.payment.map((el2) => {
               return new Promise<void>((resolve, reject) => {
-                const payment = listPayment.find(el3 => el3.kodepayment.toUpperCase() === el2.kodepayment.toUpperCase())
+                const payment = listPayment.find(el3 => el3.kodepayment?.toUpperCase() === el2.kodepayment?.toUpperCase())
                 const isCard = payment && payment.isCard ? payment.isCard : false
                 const isCashlez = payment && payment.isCashlez ? payment.isCashlez : false
                 const isQREN = payment && payment.isQREN ? payment.isQREN : false
@@ -1981,10 +1981,10 @@ const cekDetail = (cdb: any, conn: Connection, kodeoutlet: string, transaksi: Tr
           for (let i = 0, j = transaksi.payment.length; i < j; i++) {
             for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
               const { kodebarang, index, qty, jumlah, discountAmount } = transaksi.payment[i].item[k];
-              const found = listItem.find(el => el.kodebarang.toUpperCase() === kodebarang.toUpperCase() && el.index === index);
+              const found = listItem.find(el => el.kodebarang?.toUpperCase() === kodebarang?.toUpperCase() && el.index === index);
               if (found) {
                 listItem = listItem.map(el => {
-                  if (el.kodebarang.toUpperCase() === kodebarang.toUpperCase() && el.index === index) {
+                  if (el.kodebarang?.toUpperCase() === kodebarang?.toUpperCase() && el.index === index) {
                     return {
                       ...el,
                       qty: el.qty + qty,
@@ -2116,10 +2116,10 @@ const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi:
           for (let i = 0, j = transaksi.payment.length; i < j; i++) {
             for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
               const { kodebarang, index, qty, jumlah, discountAmount } = transaksi.payment[i].item[k];
-              const found = listItem.find(el => el.kodebarang.toUpperCase() === kodebarang.toUpperCase() && el.index === index);
+              const found = listItem.find(el => el.kodebarang?.toUpperCase() === kodebarang?.toUpperCase() && el.index === index);
               if (found) {
                 listItem = listItem.map(el => {
-                  if (el.kodebarang.toUpperCase() === kodebarang.toUpperCase() && el.index === index) {
+                  if (el.kodebarang?.toUpperCase() === kodebarang?.toUpperCase() && el.index === index) {
                     return {
                       ...el,
                       qty: el.qty + qty,
@@ -3465,9 +3465,9 @@ const processPaymentRetail = (conn: Connection, kodeoutlet: string, payment: any
           if (err) return reject(err)
           const paymentItem = payment.item.map(el2 => {
             return new Promise<void>((resolve, reject) => {
-              const barang = listBarang.find(el3 => el3.kodebarang.toUpperCase() === el2.kodebarang.toUpperCase())
+              const barang = listBarang.find(el3 => el3.kodebarang?.toUpperCase() === el2.kodebarang?.toUpperCase())
               const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
-              const kategori = kodekategori ? listKategori.find(el3 => el3.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+              const kategori = kodekategori ? listKategori.find(el3 => el3.kodekategori?.toUpperCase() === kodekategori?.toUpperCase()) : null
               const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
               conn.query("INSERT INTO tblorderanpaymentitem (kodeoutlet,idtrans,noinvoice,urutpayment,kodesubkategori,namasubkategori, kodebarang,namabarang,qty,discountPercent, discountAmount,harga,jumlah) VALUE (?,?,?,1,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, payment.noinvoice, kodekategori, namakategori, el2.kodebarang, el2.namabarang, el2.qty, el2.discountPercent, el2.discountAmount, el2.harga, el2.jumlah], (err) => {
                 if (err) return reject(err)
@@ -3476,7 +3476,7 @@ const processPaymentRetail = (conn: Connection, kodeoutlet: string, payment: any
             })
           })
           const paymentDetail = new Promise<void>((resolve, reject) => {
-            const isCard = payment.paymentMethod.toUpperCase() !== 'CASH'
+            const isCard = payment.paymentMethod?.toUpperCase() !== 'CASH'
             conn.query("INSERT INTO tblorderanpaymentdetail (kodeoutlet,idtrans,noinvoice,urutpayment,kodepayment,namapayment,amount,isCard,isCashlez) VALUE (?,?,?,1,?,?,?,?,0)", [kodeoutlet, idtrans, payment.noinvoice, payment.kodepayment, payment.namapayment, payment.total, isCard], err => {
               if (err) return reject(err)
               return resolve()
@@ -3501,9 +3501,9 @@ const processItemRetail = (conn: Connection, kodeoutlet: string, detail: any[], 
   return new Promise<void>((resolve, reject) => {
     if (detail) {
       const item = detail.map(el => {
-        const barang = listBarang.find(el2 => el2.kodebarang.toUpperCase() === el.kodebarang.toUpperCase())
+        const barang = listBarang.find(el2 => el2.kodebarang?.toUpperCase() === el.kodebarang?.toUpperCase())
         const kodekategori = barang && barang.kodekategori ? barang.kodekategori : null
-        const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori.toUpperCase() === kodekategori.toUpperCase()) : null
+        const kategori = kodekategori ? listKategori.find(el2 => el2.kodekategori?.toUpperCase() === kodekategori?.toUpperCase()) : null
         const namakategori = kategori && kategori.namakategori ? kategori.namakategori : null
         conn.query("INSERT INTO tblorderand (kodeoutlet,idtrans,noinvoice,kodesubkategori,namasubkategori,kodebarang,namabarang,qty,discountPercent,discountAmount, harga,jumlah) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, kodekategori, namakategori, el.kodebarang, el.namabarang, el.qty, el.discountPercent, el.discountAmount, el.harga, el.jumlah], err => {
           if (err) return reject(err)
@@ -3545,7 +3545,7 @@ const processTransaksiRetail = (listTransaksi: any[], kodeoutlet: string, listKa
                 processOrderanRetail(conn, kodeoutlet, idtrans, el.noinvoice, el.tanggal, el.userin, el.userupt, el.jamin, el.jamupt, el.lastJamBayar, el.statusid, el.voidReason, el.userRetur).then(() => {
                   return processItemRetail(conn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listBarang)
                 }).then(() => {
-                  return processPaymentRetail(conn, kodeoutlet, { paymentMethod: el.paymentMethod, kodepayment: (el.paymentMethod.toUpperCase() === "CASH" || el.paymentMethod.toUpperCase() === "TUNAI") ? "TUNAI" : el.kodepayment != null ? el.kodepayment : "NON TUNAI" /**el.kodepayment**/, namapayment: el.namapayment != null ? el.namapayment : (el.paymentMethod.toUpperCase() === "CASH" || el.paymentMethod.toUpperCase() === "TUNAI"), "TUNAI": "CREDIT" /**el.namapayment */, tax: el.tax, discount: el.discount, service: el.service, subtotal: el.subtotal, diskonAmt: el.diskonAmt, serviceAmt: el.serviceAmt, taxAmt: el.taxAmt, total: el.total, totalBayar: el.totalBayar, kembalian: el.kembalian, item: el.detail, noinvoice: el.noinvoice, sessionId: el.sessionId, userin: el.userin, jamin: el.jamin }, idtrans, listBarang, listKategori)
+                  return processPaymentRetail(conn, kodeoutlet, { paymentMethod: el.paymentMethod, kodepayment: (el.paymentMethod?.toUpperCase() === "CASH" || el.paymentMethod?.toUpperCase() === "TUNAI") ? "TUNAI" : el.kodepayment != null ? el.kodepayment : "NON TUNAI" /**el.kodepayment**/, namapayment: el.namapayment != null ? el.namapayment : (el.paymentMethod?.toUpperCase() === "CASH" || el.paymentMethod?.toUpperCase() === "TUNAI"), "TUNAI": "CREDIT" /**el.namapayment */, tax: el.tax, discount: el.discount, service: el.service, subtotal: el.subtotal, diskonAmt: el.diskonAmt, serviceAmt: el.serviceAmt, taxAmt: el.taxAmt, total: el.total, totalBayar: el.totalBayar, kembalian: el.kembalian, item: el.detail, noinvoice: el.noinvoice, sessionId: el.sessionId, userin: el.userin, jamin: el.jamin }, idtrans, listBarang, listKategori)
                 }).then(() => {
                   return resolve()
                 }).catch(err => {

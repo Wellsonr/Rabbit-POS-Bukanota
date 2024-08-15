@@ -1350,7 +1350,7 @@ const processCaptainOrder = (conn: Connection, kodeoutlet: string, captainOrder:
 }
 const processCaptainOrderERP = (myconn: Connection, kodeoutlet: string, captainOrder: CaptainOrder[], idtrans: string, noinvoice: string, detail: TransaksiDetail[], listSubkategori: SubKategori[], listBarang: Barang[], listTopping: Topping[]) => {
   return new Promise<void>((resolve, reject) => {
-    if (captainOrder) {
+    if (captainOrder && captainOrder.length > 0) {
       const CO = captainOrder.map((el, index) => {
         return new Promise<void>((resolve, reject) => {
           myconn.query("INSERT INTO pos_orderanco (kodeoutlet,idtrans,noinvoice, urutco, kodewaiter, userin, jamin) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, index + 1, el.kodewaiter, el.userin, moment(el.jamin).format("YYYY-MM-DD HH:mm:ss")], (err) => {

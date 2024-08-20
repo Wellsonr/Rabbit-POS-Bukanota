@@ -826,6 +826,7 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         const chkSessionSaldoTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOTERIMA") > -1;
         const chkSessionuUserTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("USERTERIMA") > -1;
         const chkSessionuJamTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("JAMTERIMA") > -1;
+        const chkSessionIdprTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("IDPRTERIMA") > -1;
         const listPromise: Promise<void>[] = [];
         if (!chkOrderanIsReservasi) {
           listPromise.push(
@@ -983,7 +984,7 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
             })
           );
         }
-        if (!chkSessionStatusID) {
+        if (!chkSessionSaldoTerima) {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE pos_session ADD COLUMN saldoTerima DOUBLE DEFAULT NULL;`;
@@ -994,7 +995,18 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
             })
           );
         }
-        if (!chkSessionSaldoTerima) {
+        if (!chkSessionIdprTerima) {
+          listPromise.push(
+            new Promise<void>((resolveTabel, rejectTabel) => {
+              const querySendTo = `ALTER TABLE pos_session ADD COLUMN idprTerima VARCHAR(50) DEFAULT NULL;`;
+              myconn.query(querySendTo, (err) => {
+                if (err) return rejectTabel(err);
+                return resolveTabel();
+              });
+            })
+          );
+        }
+        if (!chkSessionStatusID) {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
               const querySendTo = `ALTER TABLE pos_session ADD COLUMN statusid TINYINT(1) DEFAULT 1;`;

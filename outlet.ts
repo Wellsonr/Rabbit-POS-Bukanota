@@ -2935,12 +2935,40 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                   }
                                 }
                                 //INSERT HEADER
-                                myconn.query('INSERT INTO tblorderan (kodeorderan,tanggal,statusid,diskon,total,grandtot,userin,userupt,jam,jamupt,diskpers,periode,serv,persenserv,tax,persentax,ket,nomejamanual,kodegudang,outlet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [`${el.noinvoice}-${kodeOutletERP}`, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), 20, diskon, jumlah, grandtot, "well", el.userupt, moment(el.jamin).format('YYYY-MM-DD HH:mm:ss'), moment(el.jamupt).format('YYYY-MM-DD HH:mm:ss'), diskonpers, moment(el.tanggal).format('YYYYMM'), service, servicepers, tax, taxpers, el.namacustomer, (el.nomeja || ''), 'GEN0001', kodeOutletERP], (err, results) => {
-                                  if (err) return reject3(err);
-                                  if (results.affectedRows > 0) {
-                                    return resolve3();
-                                  } else return reject3(new Error('Failed to insert data'));
-                                });
+                                myconn.query(
+                                  'INSERT INTO tblorderan (kodeorderan, tanggal, statusid, diskon, total, grandtot, userin, userupt, jam, jamupt, diskpers, periode, serv, persenserv, tax, persentax, ket, nomejamanual, kodegudang, outlet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                                  [
+                                    `${el.noinvoice}-${kodeOutletERP}`,
+                                    moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'),  // Format date
+                                    20,  // Assuming statusid is a constant value of 20
+                                    diskon,
+                                    jumlah,
+                                    grandtot,
+                                    el.userin,
+                                    el.userupt,
+                                    moment(el.jamin).format('YYYY-MM-DD HH:mm:ss'),  // Format jam
+                                    moment(el.jamupt).format('YYYY-MM-DD HH:mm:ss'), // Format jamupt
+                                    diskonpers,
+                                    moment(el.tanggal).format('YYYYMM'),  // Format periode (as YYYYMM)
+                                    service,
+                                    servicepers,
+                                    tax,
+                                    taxpers,
+                                    el.namacustomer,  // Assuming `el.namacustomer` is non-nullable
+                                    el.nomeja || '',  // Default to an empty string if `el.nomeja` is null/undefined
+                                    'GEN0001',  // Static value for kodegudang
+                                    kodeOutletERP  // Insert outlet code
+                                  ],
+                                  (err, results) => {
+                                    if (err) return reject3(err);  // Reject if there is an error
+                                    if (results.affectedRows > 0) {
+                                      return resolve3();  // Resolve if rows were affected (successful insert)
+                                    } else {
+                                      return reject3(new Error('Failed to insert data'));  // Reject if no rows were affected
+                                    }
+                                  }
+                                );
+
                               });
                               promH
                                 .then(() => {

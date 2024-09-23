@@ -2935,7 +2935,7 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                   }
                                 }
                                 //INSERT HEADER
-                                myconn.query('INSERT INTO tblorderan (kodeorderan,tanggal,statusid,diskon,total,grandtot,userin,userupt,jam,jamupt,diskpers,periode,serv,persenserv,tax,persentax,ket,nomejamanual,kodegudang,outlet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [`${el.noinvoice}-${kodeOutletERP}`, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), 20, diskon, jumlah, grandtot, el.userin, el.userupt, moment(el.jamin).format('YYYY-MM-DD HH:mm:ss'), moment(el.jamupt).format('YYYY-MM-DD HH:mm:ss'), diskonpers, moment(el.tanggal).format('YYYYMM'), service, servicepers, tax, taxpers, el.namacustomer, (el.nomeja || ''), 'GEN0001', kodeOutletERP], (err, results) => {
+                                myconn.query('INSERT INTO tblorderan (kodeorderan,tanggal,statusid,diskon,total,grandtot,userin,userupt,jam,jamupt,diskpers,periode,serv,persenserv,tax,persentax,ket,nomejamanual,kodegudang,outlet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [`${el.noinvoice}-${kodeOutletERP}`, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), 20, diskon, jumlah, grandtot, "well", el.userupt, moment(el.jamin).format('YYYY-MM-DD HH:mm:ss'), moment(el.jamupt).format('YYYY-MM-DD HH:mm:ss'), diskonpers, moment(el.tanggal).format('YYYYMM'), service, servicepers, tax, taxpers, el.namacustomer, (el.nomeja || ''), 'GEN0001', kodeOutletERP], (err, results) => {
                                   if (err) return reject3(err);
                                   if (results.affectedRows > 0) {
                                     return resolve3();

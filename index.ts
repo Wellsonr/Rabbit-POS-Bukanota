@@ -42,7 +42,7 @@ amqp.connect(`amqp://bukanota_admin:TXsrHHFpy95ISjvw@${mqHost}`)
       return ok.then(() => {
         return ch.consume(QUEUE_NAME, msg => {
           const parsed = JSON.parse(msg.content.toString())
-          console.log(parsed);
+          console.log("lihat data parsed:", parsed);
           switch (parsed.tipe) {
             case TRANSAKSI:
               outlet(parsed.dbname).then(() => {
@@ -118,14 +118,14 @@ amqp.connect(`amqp://bukanota_admin:TXsrHHFpy95ISjvw@${mqHost}`)
                   console.warn(err);
                   ch.reject(msg, true);
                 });
-                break;
+              break;
             case IMPORTTRANSAKSI:
-                processImportTransaksi(parsed.kodeoutlet, parsed.idtrans).then(() => {
-                  ch.ack(msg)
-                }).catch(err => {
-                  console.warn(err);
-                  ch.reject(msg, true);
-                });
+              processImportTransaksi(parsed.kodeoutlet, parsed.idtrans).then(() => {
+                ch.ack(msg)
+              }).catch(err => {
+                console.warn(err);
+                ch.reject(msg, true);
+              });
               break;
             default: ch.ack(msg);
           }

@@ -92,7 +92,7 @@ amqp.connect(`amqp://bukanota_admin:TXsrHHFpy95ISjvw@${mqHost}`)
       return ok.then(() => {
         return ch.consume(QUEUE_NAME, msg => {
           const parsed = JSON.parse(msg.content.toString())
-          console.log(parsed);
+          console.log("console parsed data: ", parsed);
           switch (parsed.tipe) {
             case TRANSAKSI:
               outlet(parsed.dbname).then(() => {

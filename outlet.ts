@@ -376,7 +376,7 @@ const generateJurnal = (
                   const postingDetail = (i: number) => {
                     const el = listDataDet[i];
                     const urut = i + 1;
-                    const kodedevisionDetail =  kodedevision || el.kodedevision || 'GEN0001';
+                    const kodedevisionDetail = kodedevision || el.kodedevision || 'GEN0001';
                     const cekCoacc = new Promise<any>(
                       (resolveCoacc, rejectCoacc) => {
                         const cekSupplier = new Promise<any>((resolveSup) => {
@@ -808,25 +808,25 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
         listFieldBiayaD,
         listFieldSessionPOS,
       ]) => {
-        const chkOrderanIsReservasi =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("ISRESERVASI") > -1;
-        const chkOrderanNilaiDeposit =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
-        const chkOrderanNilaiKeterangan =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("NILAIKETERANGAN") > -1;
-        const chkOrderanTglReservasi =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
-        const chkTransMasukDIDPR =  listFieldTransMasukD.map((el) => el.Field?.toUpperCase()).indexOf("IDPR") > -1;
-        const chkTransKeluarDIDPR =  listFieldTransKeluarD.map((el) => el.Field?.toUpperCase()).indexOf("IDPR") > -1;
-        const chkOrderanHpCust =  listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("HPCUSTOMER") > -1;
-        const chkBiayaIdTransPOS =  listFieldBiaya.map((el) => el.Field?.toUpperCase()).indexOf("IDTRANSPOS") > -1;
-        const chkBiayaDIdTransPOS =  listFieldBiayaD.map((el) => el.Field?.toUpperCase()).indexOf("IDTRANSPOS") > -1;
-        const chkSessionSaldoKasMasuk =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOKASMASUK") > -1;
-        const chkSessionSaldoKasKeluar =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOKASKELUAR") > -1;
-        const chkSessionSaldoKasPenjualanCash =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOPENJUALANCASH") > -1;
-        const chkSessionSaldoKasPenjualanNonCash =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOPENJUALANNONCASH") > -1;
-        const chkSessionSelisihSaldo =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SELISIHSALDO") > -1;
-        const chkSessionStatusID =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("STATUSID") > -1;
-        const chkSessionSaldoTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOTERIMA") > -1;
-        const chkSessionuUserTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("USERTERIMA") > -1;
-        const chkSessionuJamTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("JAMTERIMA") > -1;
-        const chkSessionIdprTerima =  listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("IDPRTERIMA") > -1;
+        const chkOrderanIsReservasi = listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("ISRESERVASI") > -1;
+        const chkOrderanNilaiDeposit = listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("NILAIDEPOSIT") > -1;
+        const chkOrderanNilaiKeterangan = listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("NILAIKETERANGAN") > -1;
+        const chkOrderanTglReservasi = listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("TANGGALRESERVASI") > -1;
+        const chkTransMasukDIDPR = listFieldTransMasukD.map((el) => el.Field?.toUpperCase()).indexOf("IDPR") > -1;
+        const chkTransKeluarDIDPR = listFieldTransKeluarD.map((el) => el.Field?.toUpperCase()).indexOf("IDPR") > -1;
+        const chkOrderanHpCust = listFieldOrderan.map((el) => el.Field?.toUpperCase()).indexOf("HPCUSTOMER") > -1;
+        const chkBiayaIdTransPOS = listFieldBiaya.map((el) => el.Field?.toUpperCase()).indexOf("IDTRANSPOS") > -1;
+        const chkBiayaDIdTransPOS = listFieldBiayaD.map((el) => el.Field?.toUpperCase()).indexOf("IDTRANSPOS") > -1;
+        const chkSessionSaldoKasMasuk = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOKASMASUK") > -1;
+        const chkSessionSaldoKasKeluar = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOKASKELUAR") > -1;
+        const chkSessionSaldoKasPenjualanCash = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOPENJUALANCASH") > -1;
+        const chkSessionSaldoKasPenjualanNonCash = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOPENJUALANNONCASH") > -1;
+        const chkSessionSelisihSaldo = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SELISIHSALDO") > -1;
+        const chkSessionStatusID = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("STATUSID") > -1;
+        const chkSessionSaldoTerima = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("SALDOTERIMA") > -1;
+        const chkSessionuUserTerima = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("USERTERIMA") > -1;
+        const chkSessionuJamTerima = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("JAMTERIMA") > -1;
+        const chkSessionIdprTerima = listFieldSessionPOS.map((el) => el.Field?.toUpperCase()).indexOf("IDPRTERIMA") > -1;
         const listPromise: Promise<void>[] = [];
         if (!chkOrderanIsReservasi) {
           listPromise.push(
@@ -894,7 +894,7 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
             })
           );
         }
-        
+
         if (!chkOrderanHpCust) {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
@@ -906,7 +906,7 @@ const sinkronDBERP = (myconn: Connection): Promise<void> => {
             })
           );
         }
-        
+
         if (!chkBiayaIdTransPOS) {
           listPromise.push(
             new Promise<void>((resolveTabel, rejectTabel) => {
@@ -1225,11 +1225,11 @@ const processOrderanERP = (
   userRetur: string,
   useDelivery: boolean,
   member: {
-  nama?: string
-  alamat?: string
-  nohandphone?: string
-  zona?: string
-} | null,
+    nama?: string
+    alamat?: string
+    nohandphone?: string
+    zona?: string
+  } | null,
   isReservasi: boolean,
   nilaiDeposit: number | null,
   nilaiKeterangan: string | null,
@@ -1241,7 +1241,7 @@ const processOrderanERP = (
     const memberAddress = member ? member.alamat : undefined
     const memberPhone = member ? member.nohandphone : undefined
     const memberZona = member ? member.zona : undefined
-    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, hpcustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer,hpcustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi], (err) => {
+    myconn.query("INSERT INTO pos_orderan (kodeoutlet, idtrans, noinvoice, tanggal, nomeja, namacustomer, hpcustomer, keterangan, userin, userupt, jamin, jamupt, lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, isDelivery, memberName, memberAddress, memberPhone, memberZone, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [kodeoutlet, idtrans, noinvoice, moment(tanggal).format("YYYY-MM-DD HH:mm:ss"), nomeja, namacustomer, hpcustomer, keterangan, userin, userupt, moment(jamin).format("YYYY-MM-DD HH:mm:ss"), moment(jamupt).format("YYYY-MM-DD HH:mm:ss"), _lastJamBayar, statusid, displayHarga, cover, voidReason, userRetur, useDelivery, memberName, memberAddress, memberPhone, memberZona, isReservasi, nilaiDeposit, nilaiKeterangan, tanggalReservasi], (err) => {
       if (err) return reject(err)
       return resolve()
     })
@@ -1828,81 +1828,81 @@ const processPaymentERP = (myconn: Connection, kodeoutlet: string, payment: Tran
 const processPoin = (
   myconn: Connection,
   kodeoutlet: string,
-  hpcustomer: string ,
+  hpcustomer: string,
   noinvoice: string,
   payment: TransaksiPayment[],
   lastJamBayar: string
-  ) => {
-    return new Promise<void>((resolve, reject) => {
-      if (payment && hpcustomer) {
-        const tanggal = moment(lastJamBayar).format("YYYY-MM-DD HH:mm:ss");
-    
-        const deletePromise = new Promise<void>((resolveDelete, rejectDelete) => {
-          const paymentNotrans = `PAYMENTPOIN-${noinvoice}`;
-            myconn.query(
-              "DELETE FROM tbltranspoin WHERE notrans IN (?, ?) AND kodeoutlet = ?",
-              [noinvoice, paymentNotrans, kodeoutlet], (deleteErr) => {
-                if (deleteErr) return rejectDelete(deleteErr);
-                return resolveDelete();
-              });
-            });
-    
-        deletePromise.then(() => {
-          const hasil = payment.map((el) => {
-            return new Promise<void>((resolvePoin, rejectPoin) => {
-              const paymentMasukPromises = el.item.map((el2) => {
-                return new Promise<void>((resolvePoinItem, rejectPoinItem) => {
-                  if (el2?.totalPoin > 0) {
-                    myconn.query(
-                      "INSERT INTO tbltranspoin (notrans, kodeoutlet, kodecust, kodebarang, qty, poin, jumlah_poin, tanggal) VALUE (?, ?, ?, ?, ?, ?, ?, ?)",
-                      [noinvoice, kodeoutlet, hpcustomer, el2.kodebarang, el2.qty, el2.poin, el2.totalPoin, tanggal],
-                      (err) => {
-                        if (err) return rejectPoinItem(err);
-                        return resolvePoinItem();
-                      }
-                    );
-                  } else {
-                    return resolvePoinItem();
-                  }
-                });
-              });
-    
-              const paymentPotongPromises = el.payment.map((el2) => {
-                return new Promise<void>((resolvePoinItem, rejectPoinItem) => {
-                  if (el2?.kodepayment === "POTONGANPOIN" && el2?.poin > 0) {
-                    myconn.query(
-                      "INSERT INTO tbltranspoin (notrans, kodeoutlet, kodecust, kodebarang, qty, poin, jumlah_poin, tanggal) VALUE (?, ?, ?, ?, ?, ?, ?, ?)",
-                      [`PAYMENTPOIN-${noinvoice}`, kodeoutlet, hpcustomer, el2.kodepayment, -1, el2.poin * -1, el2.poin * -1, tanggal],
-                      (err) => {
-                        if (err) return rejectPoinItem(err);
-                        return resolvePoinItem();
-                      }
-                    );
-                  } else {
-                    return resolvePoinItem();
-                  }
-                });
-              });
-    
-              Promise.all([
-                ...paymentMasukPromises, 
-                ...paymentPotongPromises,
-              ])
-                .then(() => resolvePoin())
-                .catch(rejectPoin);
-            });
+) => {
+  return new Promise<void>((resolve, reject) => {
+    if (payment && hpcustomer) {
+      const tanggal = moment(lastJamBayar).format("YYYY-MM-DD HH:mm:ss");
+
+      const deletePromise = new Promise<void>((resolveDelete, rejectDelete) => {
+        const paymentNotrans = `PAYMENTPOIN-${noinvoice}`;
+        myconn.query(
+          "DELETE FROM tbltranspoin WHERE notrans IN (?, ?) AND kodeoutlet = ?",
+          [noinvoice, paymentNotrans, kodeoutlet], (deleteErr) => {
+            if (deleteErr) return rejectDelete(deleteErr);
+            return resolveDelete();
           });
-    
-          Promise.all(hasil)
-            .then(() => resolve())
-            .catch(reject);
-        }).catch(reject);
-      } else {
-        return resolve();
-      }
-    });
-    
-    
+      });
+
+      deletePromise.then(() => {
+        const hasil = payment.map((el) => {
+          return new Promise<void>((resolvePoin, rejectPoin) => {
+            const paymentMasukPromises = el.item.map((el2) => {
+              return new Promise<void>((resolvePoinItem, rejectPoinItem) => {
+                if (el2?.totalPoin > 0) {
+                  myconn.query(
+                    "INSERT INTO tbltranspoin (notrans, kodeoutlet, kodecust, kodebarang, qty, poin, jumlah_poin, tanggal) VALUE (?, ?, ?, ?, ?, ?, ?, ?)",
+                    [noinvoice, kodeoutlet, hpcustomer, el2.kodebarang, el2.qty, el2.poin, el2.totalPoin, tanggal],
+                    (err) => {
+                      if (err) return rejectPoinItem(err);
+                      return resolvePoinItem();
+                    }
+                  );
+                } else {
+                  return resolvePoinItem();
+                }
+              });
+            });
+
+            const paymentPotongPromises = el.payment.map((el2) => {
+              return new Promise<void>((resolvePoinItem, rejectPoinItem) => {
+                if (el2?.kodepayment === "POTONGANPOIN" && el2?.poin > 0) {
+                  myconn.query(
+                    "INSERT INTO tbltranspoin (notrans, kodeoutlet, kodecust, kodebarang, qty, poin, jumlah_poin, tanggal) VALUE (?, ?, ?, ?, ?, ?, ?, ?)",
+                    [`PAYMENTPOIN-${noinvoice}`, kodeoutlet, hpcustomer, el2.kodepayment, -1, el2.poin * -1, el2.poin * -1, tanggal],
+                    (err) => {
+                      if (err) return rejectPoinItem(err);
+                      return resolvePoinItem();
+                    }
+                  );
+                } else {
+                  return resolvePoinItem();
+                }
+              });
+            });
+
+            Promise.all([
+              ...paymentMasukPromises,
+              ...paymentPotongPromises,
+            ])
+              .then(() => resolvePoin())
+              .catch(rejectPoin);
+          });
+        });
+
+        Promise.all(hasil)
+          .then(() => resolve())
+          .catch(reject);
+      }).catch(reject);
+    } else {
+      return resolve();
+    }
+  });
+
+
 }
 const convertPhone = (val: string) => {
   let handphone = val
@@ -1988,7 +1988,7 @@ const cekDetail = (cdb: any, conn: Connection, kodeoutlet: string, transaksi: Tr
       if (transaksi.statusid === 20 || transaksi.statusid === 9) {
         const jumlahDetail = transaksi?.detail?.map(el => el.jumlah).reduce((a, b) => a + b, 0) || 0;
         const jumlahPayment = transaksi?.payment?.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0) || 0;
-        if (jumlahDetail !== jumlahPayment &&  transaksi?.payment?.length > 0) {
+        if (jumlahDetail !== jumlahPayment && transaksi?.payment?.length > 0) {
           let listItem: TransaksiDetail[] = [];
           for (let i = 0, j = transaksi.payment.length; i < j; i++) {
             for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
@@ -2123,7 +2123,7 @@ const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi:
       if (transaksi.statusid === 20 || transaksi.statusid === 9) {
         const jumlahDetail = transaksi?.detail?.map(el => el.jumlah).reduce((a, b) => a + b, 0) || 0;
         const jumlahPayment = transaksi?.payment?.map(el => el.item.map(el2 => el2.jumlah).reduce((a, b) => a + b, 0)).reduce((a, b) => a + b, 0) || 0;
-        if (jumlahDetail !== jumlahPayment  &&  transaksi?.payment?.length > 0) {
+        if (jumlahDetail !== jumlahPayment && transaksi?.payment?.length > 0) {
           let listItem: TransaksiDetail[] = [];
           for (let i = 0, j = transaksi.payment.length; i < j; i++) {
             for (let k = 0, l = transaksi.payment[i].item.length; k < l; k++) {
@@ -2162,11 +2162,11 @@ const cekDetailERP = (cdb: any, conn: Connection, kodeoutlet: string, transaksi:
           } else {
             const captainOrderBackup = [...transaksi.captainOrder || []];
             const listCaptainOrder: CaptainOrder[] = [];
-            if (transaksi.captainOrder[0]?.item.length === listItem?.length && transaksi.captainOrder[0]?.item.length > 0 && listItem?.length > 0 ) {
+            if (transaksi.captainOrder[0]?.item.length === listItem?.length && transaksi.captainOrder[0]?.item.length > 0 && listItem?.length > 0) {
               listCaptainOrder.push(transaksi.captainOrder[0]);
-            }else if(transaksi.captainOrder[0]?.item?.length === 0 && listItem?.length === 0) {
+            } else if (transaksi.captainOrder[0]?.item?.length === 0 && listItem?.length === 0) {
               return resolveBalance(transaksi);
-            }else {
+            } else {
               //check 1 per 1
               conn.query('INSERT INTO pos_dataproblem (kodeoutlet, notrans, tanggal) VALUES (?,?,?)', [kodeoutlet, transaksi._id, moment(transaksi.tanggal).format("YYYY-MM-DD HH:mm:ss")], (err) => {
                 if (err) {
@@ -2259,14 +2259,14 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
   return new Promise<void>((resolve, reject) => {
     if (listTransaksi.length > 0) {
       const myconn = dbmid(mysqlConfig.host, mysqlConfig.user, mysqlConfig.password, mysqlConfig.dbname);
-        myconn.beginTransaction((err) => {
-          if (err) {
-            myconn.end()
-            return reject(err)
-          }
-          myconn.config.timeout = 0
-          sinkronDBERP(myconn)
-          .then(() =>  hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id)))
+      myconn.beginTransaction((err) => {
+        if (err) {
+          myconn.end()
+          return reject(err)
+        }
+        myconn.config.timeout = 0
+        sinkronDBERP(myconn)
+          .then(() => hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id)))
           .then(() => {
             const banyakTrans = listTransaksi.length
             const jumlahLoop = Math.ceil(banyakTrans / 1000)
@@ -2307,27 +2307,27 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                         nilaiDeposit,
                         nilaiKeterangan,
                         tanggalReservasi,
-                        ).then(() => {
+                      ).then(() => {
                         return processCaptainOrderERP(myconn, kodeoutlet, el.captainOrder, idtrans, el.noinvoice, el.detail, listSubkategori, listBarang, listTopping)
                       }).then(() => {
                         return processItemERP(myconn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listSubkategori, listBarang, listTopping)
                       }).then(() => {
                         return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
                       })
-                      .then(() => {
-                        return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
-                      })
-                      .then(() => {
-                        return resolve();
-                      }).catch(err => {
-                        console.log("Error", err)
-                        // eslint-disable-next-line @typescript-eslint/no-var-requires
-                        const fs = require('fs')
-                        fs.writeFile("D:\\error.txt", JSON.stringify(err), (err2) => {
-                          if (err2) console.log(err2)
+                        .then(() => {
+                          return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
                         })
-                        return reject(err)
-                      })
+                        .then(() => {
+                          return resolve();
+                        }).catch(err => {
+                          console.log("Error", err)
+                          // eslint-disable-next-line @typescript-eslint/no-var-requires
+                          const fs = require('fs')
+                          fs.writeFile("D:\\error.txt", JSON.stringify(err), (err2) => {
+                            if (err2) console.log(err2)
+                          })
+                          return reject(err)
+                        })
                     });
                   })
                 })
@@ -2350,8 +2350,8 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
               return reject(err)
             })
           })
-        })
-    
+      })
+
     } else return resolve();
   })
 }
@@ -2416,8 +2416,8 @@ const processSessionERP = (mysqlConfig: MysqlInfo, listSession: Session[], kodeo
           return reject(err)
         }
         sinkronDBERP(myconn)
-        .then(() => hapusPreviousSessionERP(myconn, kodeoutlet, listSession.map(el => el.sessionId)))
-        .then(() => {
+          .then(() => hapusPreviousSessionERP(myconn, kodeoutlet, listSession.map(el => el.sessionId)))
+          .then(() => {
             const hasilProcess = listSession.map(el => {
               return new Promise<void>((resolve, reject) => {
                 myconn.query("INSERT INTO pos_session (kodeoutlet, sessionId, saldoAwal, saldoAkhir, tanggalBuka, tanggalTutup, userBuka, userTutup, saldoKasMasuk, saldoKasKeluar, saldoPenjualanCash, saldoPenjualanNonCash, selisihSaldo) VALUES (?,?,?,?,?,?,?,?,?, ?, ?, ?, ?)", [kodeoutlet, el.sessionId, el.saldoAwal, el.saldoAkhir, moment(el.tanggalBuka).format("YYYY-MM-DD HH:mm:ss"), el.tanggalTutup ? moment(el.tanggalTutup).format("YYYY-MM-DD HH:mm:ss") : undefined, el.userBuka, el.userTutup, el.saldoKasMasuk, el.saldoKasKeluar, el.saldoPenjualanCash, el.saldoPenjualanNonCash, el.selisihSaldo], (err) => {
@@ -2439,8 +2439,8 @@ const processSessionERP = (mysqlConfig: MysqlInfo, listSession: Session[], kodeo
             console.log(err)
             return reject(err)
           })
-        })
-   
+      })
+
     } else return resolve()
   })
 }
@@ -2488,26 +2488,26 @@ const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[]
                   });
 
                   Promise.all<void>(promisesDetail)
-                  .then(() => {
-                    return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
-                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
-                        if(err) return rejecCekCOA(err);
-                        if(results?.length > 0){
-                            const [{coaKas}] = results;
+                    .then(() => {
+                      return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
+                        myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
+                          if (err) return rejecCekCOA(err);
+                          if (results?.length > 0) {
+                            const [{ coaKas }] = results;
                             return resolveCekCOA(coaKas)
-                        }else{
-                          return resolveCekCOA(0)
-                        }
-                      });
+                          } else {
+                            return resolveCekCOA(0)
+                          }
+                        });
+                      })
                     })
-                  })
                     .then((coaKas) => {
-                      return new Promise<void>((resolveJurnal, rejectJurnal) => {   
+                      return new Promise<void>((resolveJurnal, rejectJurnal) => {
                         const ketrans = `Kas Masuk Kasir`;
-                        const notrans= `transkasmasuk-${el.noinvoice}-${kodeoutlet}`;
+                        const notrans = `transkasmasuk-${el.noinvoice}-${kodeoutlet}`;
                         const listDataDetTrans = [];
                         el.detail.map(dt => {
-                          const { idpr, namabiaya, amount  } = dt;
+                          const { idpr, namabiaya, amount } = dt;
                           listDataDetTrans.push({
                             idpr: coaKas,
                             decs: `Kas Masuk Kasir: ${namabiaya}`,
@@ -2521,17 +2521,17 @@ const processKasMasukERP = (mysqlConfig: MysqlInfo, listKasMasuk: TransaksiKas[]
                             nobukti: notrans,
                           });
                         });
-                           generateJurnal(
-                            el.userin,
-                            myconn,
-                            notrans,
-                            moment(tanggal).format("YYYY-MM-DD HH:mm:ss"),
-                            moment(tanggal).format("YYYYMM"),
-                            ketrans,
-                            listDataDetTrans,
-                            "",
-                            kodeoutlet
-                          )
+                        generateJurnal(
+                          el.userin,
+                          myconn,
+                          notrans,
+                          moment(tanggal).format("YYYY-MM-DD HH:mm:ss"),
+                          moment(tanggal).format("YYYYMM"),
+                          ketrans,
+                          listDataDetTrans,
+                          "",
+                          kodeoutlet
+                        )
                           .then(() => resolveJurnal())
                           .catch((err) => rejectJurnal(err));
                       })
@@ -2612,7 +2612,7 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
                 const jamin = el.jamin != null ? moment(el.jamin).format("YYYY-MM-DD HH:mm:ss") : undefined;
                 const tanggal = el.tanggal != null ? moment(el.tanggal).format("YYYY-MM-DD HH:mm:ss") : undefined;
                 const ketrans = `Kas Keluar Kasir`;
-                const notrans= `transkaskeluar-${el.noinvoice}-${kodeoutlet}`;
+                const notrans = `transkaskeluar-${el.noinvoice}-${kodeoutlet}`;
                 myconn.query("INSERT INTO pos_transkaskeluar (kodeoutlet, idtrans, noinvoice, sessionId, userin, jamin, tanggal) VALUE (?,?,?,?,?,?,?)", [kodeoutlet, el._id, el.noinvoice, el.sessionId, el.userin, jamin, tanggal], (errInsertTransKasKeluar) => {
                   if (errInsertTransKasKeluar) return rejectInsertTransKasKeluar(errInsertTransKasKeluar);
                   const promisesDetail = el.detail.map(dt => {
@@ -2627,56 +2627,56 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
                   Promise.all<void>([
                     ...promisesDetail
                   ])
-                  .then(() => {
-                    return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
-                      myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
-                        if(err) return rejecCekCOA(err);
-                        if(results?.length > 0){
-                            const [{coaKas}] = results;
+                    .then(() => {
+                      return new Promise<number>((resolveCekCOA, rejecCekCOA) => {
+                        myconn.query(`SELECT idprdebet coaKas FROM tblpayment WHERE kodetransaksi= ? AND (namapayment LIKE "%tunai%" OR namapayment LIKE "%CASH%") LIMIT 1`, [kodeoutlet], (err, results) => {
+                          if (err) return rejecCekCOA(err);
+                          if (results?.length > 0) {
+                            const [{ coaKas }] = results;
                             return resolveCekCOA(coaKas)
-                        }else{
-                          return resolveCekCOA(0)
-                        }
-                      });
+                          } else {
+                            return resolveCekCOA(0)
+                          }
+                        });
+                      })
                     })
-                  })
-                  .then((coaKas) => {
-                    return new Promise<number>((resolveTblBiaya, rejectTblBiaya) => {
-                      myconn.query('INSERT INTO tblbiaya (notrans, tanggal, ccy, idpr, keterangan, cashchequeno, custid, userin, userupt, jam, jamupt, status, department, kursh, tanggalcheque, idtransPOS) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), 20, ?, ?, ?,?)', [notrans, tanggal, "IDR", coaKas, ketrans, "-", "KASIR-OUTLET",  el.userin,  el.userin, kodeoutlet, 1, tanggal, el._id, 20],
-                        (err) => {
-                          if (err) return rejectTblBiaya(err);
-                          resolveTblBiaya(coaKas);
-                        }
-                      );
+                    .then((coaKas) => {
+                      return new Promise<number>((resolveTblBiaya, rejectTblBiaya) => {
+                        myconn.query('INSERT INTO tblbiaya (notrans, tanggal, ccy, idpr, keterangan, cashchequeno, custid, userin, userupt, jam, jamupt, status, department, kursh, tanggalcheque, idtransPOS) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), 20, ?, ?, ?,?)', [notrans, tanggal, "IDR", coaKas, ketrans, "-", "KASIR-OUTLET", el.userin, el.userin, kodeoutlet, 1, tanggal, el._id, 20],
+                          (err) => {
+                            if (err) return rejectTblBiaya(err);
+                            resolveTblBiaya(coaKas);
+                          }
+                        );
+                      })
                     })
-                  })
-                  .then((coaKas) => {
-                    return new Promise<number>((resolveTblBiayaD, rejectTblBiayaD) => {
-                      const promisesDetail = el.detail.map(dt => {
-                        console.log(dt)
-                        return new Promise<void>((resolveTblBiayaDInsert, rejectTblBiayaDInsert) => {
-                          // myconn.query(`INSERT INTO tblbiayad (notrans, coaccid, amount, kurs, nopo, qty, unit, kodevehicle, sales, userin, userupt, jam, jamupt, keterangan, kodeprojectbaru, status, kodepaymentd, idtransPOS, department) VALUES ( ?, ?, ?, 1, "", 1, 1, "GEN0001", "GEN0001", ?, ?, NOW(), NOW(), ?, "GEN0001", ?, 5, ?, ?, ? )`, [notrans, dt.idpr,  dt.amount, el.userin, el.userin, `${dt.namabiaya} ${dt.keterangan}`, '', coaKas, el._id, kodeoutlet],
-                          myconn.query(`INSERT INTO tblbiayad (notrans, coaccid, amount, kurs, nopo, qty, unit, kodevehicle, sales, userin, userupt, jam, jamupt, keterangan, noinvoice, kodeprojectbaru, status, kodepaymentd, idtransPOS, department) VALUES ( ?, ?, ?, 1, "", 1, 1, "GEN0001", "GEN0001", ?, ?, NOW(), NOW(), ?, ?, "GEN0001", 5, ?, ?, ? )`, [notrans, dt.idpr,  dt.amount, el.userin, el.userin, `${dt.namabiaya} ${dt.keterangan}`, '', coaKas, el._id, kodeoutlet],
-                           (err) => {
-                            if (err) return rejectTblBiayaDInsert(err);
-                            else return resolveTblBiayaDInsert();
+                    .then((coaKas) => {
+                      return new Promise<number>((resolveTblBiayaD, rejectTblBiayaD) => {
+                        const promisesDetail = el.detail.map(dt => {
+                          console.log(dt)
+                          return new Promise<void>((resolveTblBiayaDInsert, rejectTblBiayaDInsert) => {
+                            // myconn.query(`INSERT INTO tblbiayad (notrans, coaccid, amount, kurs, nopo, qty, unit, kodevehicle, sales, userin, userupt, jam, jamupt, keterangan, kodeprojectbaru, status, kodepaymentd, idtransPOS, department) VALUES ( ?, ?, ?, 1, "", 1, 1, "GEN0001", "GEN0001", ?, ?, NOW(), NOW(), ?, "GEN0001", ?, 5, ?, ?, ? )`, [notrans, dt.idpr,  dt.amount, el.userin, el.userin, `${dt.namabiaya} ${dt.keterangan}`, '', coaKas, el._id, kodeoutlet],
+                            myconn.query(`INSERT INTO tblbiayad (notrans, coaccid, amount, kurs, nopo, qty, unit, kodevehicle, sales, userin, userupt, jam, jamupt, keterangan, noinvoice, kodeprojectbaru, status, kodepaymentd, idtransPOS, department) VALUES ( ?, ?, ?, 1, "", 1, 1, "GEN0001", "GEN0001", ?, ?, NOW(), NOW(), ?, ?, "GEN0001", 5, ?, ?, ? )`, [notrans, dt.idpr, dt.amount, el.userin, el.userin, `${dt.namabiaya} ${dt.keterangan}`, '', coaKas, el._id, kodeoutlet],
+                              (err) => {
+                                if (err) return rejectTblBiayaDInsert(err);
+                                else return resolveTblBiayaDInsert();
+                              });
                           });
                         });
-                      });
-    
-                      Promise.all<void>([
-                        ...promisesDetail
-                      ])
-                      .then(() => resolveTblBiayaD(coaKas))
-                      .catch((err) => rejectTblBiayaD(err));
+
+                        Promise.all<void>([
+                          ...promisesDetail
+                        ])
+                          .then(() => resolveTblBiayaD(coaKas))
+                          .catch((err) => rejectTblBiayaD(err));
+                      })
                     })
-                  })
                     .then((coaKas) => {
-                      return new Promise<void>((resolveJurnal, rejectJurnal) => {   
-                        
+                      return new Promise<void>((resolveJurnal, rejectJurnal) => {
+
                         const listDataDetTrans = [];
                         el.detail.map(dt => {
-                          const { idpr, namabiaya, amount  } = dt;
+                          const { idpr, namabiaya, amount } = dt;
                           listDataDetTrans.push({
                             idpr: coaKas,
                             decs: `Kas Keluar Kasir: ${namabiaya}`,
@@ -2690,17 +2690,17 @@ const processKasKeluarERP = (mysqlConfig: MysqlInfo, listKasKeluar: TransaksiKas
                             nobukti: notrans,
                           });
                         });
-                           generateJurnal(
-                            el.userin,
-                            myconn,
-                            notrans,
-                            moment(tanggal).format("YYYY-MM-DD HH:mm:ss"),
-                            moment(tanggal).format("YYYYMM"),
-                            ketrans,
-                            listDataDetTrans,
-                            "",
-                            kodeoutlet
-                          )
+                        generateJurnal(
+                          el.userin,
+                          myconn,
+                          notrans,
+                          moment(tanggal).format("YYYY-MM-DD HH:mm:ss"),
+                          moment(tanggal).format("YYYYMM"),
+                          ketrans,
+                          listDataDetTrans,
+                          "",
+                          kodeoutlet
+                        )
                           .then(() => resolveJurnal())
                           .catch((err) => rejectJurnal(err));
                       })
@@ -2881,7 +2881,7 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                         const listPromise = listTransaksiTerposting
                           .map(el => {
                             return new Promise<void>((resolve2, reject2) => {
-                              if(!el.noinvoice) return resolve2();
+                              if (!el.noinvoice) return resolve2();
                               const promH = new Promise<void>((resolve3, reject3) => {
                                 const diskon = el?.payment?.map(pay => {
                                   if (pay.noinvoice.indexOf('split-to-') < 0) {
@@ -2929,9 +2929,9 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                   if (el?.payment?.length > 0) {
                                     servicepers = el.payment[0].servicePercent;
                                     taxpers = el.payment[0].taxPercent;
-                                  }else{
-                                    servicepers= 0;
-                                    taxpers=0;
+                                  } else {
+                                    servicepers = 0;
+                                    taxpers = 0;
                                   }
                                 }
                                 //INSERT HEADER
@@ -2965,7 +2965,7 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                             );
                                           });
                                         });
-                                
+
                                         Promise.all(listMoreDetailPromises)
                                           .then(() => resolve3())
                                           .catch(err => reject3(err));
@@ -2974,14 +2974,14 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                       }
                                     });
                                   });
-                                
+
                                   return Promise.all(listDetailPromises);
                                 })
                                 .then(() => {
                                   const listPaymentPromises: Promise<void>[] = (el?.payment || []).map((det: any) => {
                                     return new Promise<void>((resolve3, reject3) => {
                                       if (det.noinvoice.indexOf('split-to-') < 0) {
-                                        if(!el.noinvoice) return resolve3();
+                                        if (!el.noinvoice) return resolve3();
                                         const listMoreDetailPromises: Promise<void>[] = det.payment.map((pay: any) => {
                                           return new Promise<void>((resolve4, reject4) => {
                                             myconn.query(
@@ -3010,7 +3010,7 @@ const importTransaksi = (kodeoutlet: string, listTransaksi: Transaksi[]) => {
                                             );
                                           });
                                         });
-                                
+
                                         Promise.all(listMoreDetailPromises)
                                           .then(() => resolve3())
                                           .catch(err => reject3(err));
@@ -3631,6 +3631,8 @@ const processRetail = (headofficecode: string, database: string, kodeoutlet: str
             ...el.doc
           }
         }).filter(el => el.tipe === 'transaksi')
+        console.log("lihat data transaski: ", listTransaksi);
+
         try {
           await processTransaksiRetail(listTransaksi, kodeoutlet, listKategori, listBarang)
           await updateLastSequence(resp, headofficecode, database, last_seq);
@@ -3835,7 +3837,7 @@ const processKasByIdTrans = (kodeoutlet: string, idtrans: string): Promise<void>
               password: outlet.pwddb
             }
           });
-          
+
           const mysql: MysqlInfo = {
             user: outlet.mysqlUser,
             password: outlet.mysqlPwd,
@@ -3843,19 +3845,19 @@ const processKasByIdTrans = (kodeoutlet: string, idtrans: string): Promise<void>
             dbname: outlet.mysqlDb,
           };
           cdb.get(idtrans)
-          .then((data: TransaksiKas) => {
-            if (idtrans.match(/^transkasmasuk-/)) {
-              return processKasMasukERP(mysql,[data], kodeoutlet)
-            } else if (idtrans.match(/^transkaskeluar-/)) {
-              return processKasKeluarERP(mysql, [data], kodeoutlet)
-            } else return null
-          }).then(() => {
-            cdb.close()
-            return resolve()
-          }).catch(err => {
-            cdb.close();
-            return reject(err)
-          })
+            .then((data: TransaksiKas) => {
+              if (idtrans.match(/^transkasmasuk-/)) {
+                return processKasMasukERP(mysql, [data], kodeoutlet)
+              } else if (idtrans.match(/^transkaskeluar-/)) {
+                return processKasKeluarERP(mysql, [data], kodeoutlet)
+              } else return null
+            }).then(() => {
+              cdb.close()
+              return resolve()
+            }).catch(err => {
+              cdb.close();
+              return reject(err)
+            })
         } else {
           console.log("No outlet found")
           return resolve()
@@ -3930,9 +3932,9 @@ const processKasByTanggal = (kodeoutlet: string, tanggal: string): Promise<void>
             }, {})
             const hasilProcess = data.map(el => {
               if (el.tipe === 'transkasmasuk') {
-                return processKasMasukERP(mysql,el.data, kodeoutlet)
+                return processKasMasukERP(mysql, el.data, kodeoutlet)
               } else if (el.tipe === 'transkaskeluar') {
-                return processKasKeluarERP(mysql,el.data, kodeoutlet)
+                return processKasKeluarERP(mysql, el.data, kodeoutlet)
               } else {
                 return Promise.resolve()
               }
@@ -3969,7 +3971,7 @@ const processSessionByTanggal = (kodeoutlet: string, tanggal: string): Promise<v
               password: outlet.pwddb
             }
           });
-          
+
           const mysql: MysqlInfo = {
             user: outlet.mysqlUser,
             password: outlet.mysqlPwd,

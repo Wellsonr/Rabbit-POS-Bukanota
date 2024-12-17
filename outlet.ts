@@ -2509,6 +2509,8 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
             const jumlahLoop = Math.ceil(banyakTrans / 1000)
             const listPromise = []
             for (let i = 0; i < jumlahLoop; i++) {
+              console.log("lihat banyak kali loop: ", i);
+              
               const split = listTransaksi.slice((i * 1000), (i * 1000) + 999)
               listPromise.push(new Promise<void>((resolve, reject) => {
                 const hasilProcess = split.map(item => {

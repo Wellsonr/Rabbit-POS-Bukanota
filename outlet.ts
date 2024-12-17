@@ -2485,9 +2485,6 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                       }).then(() => {
                         return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
                       }).then(() => {
-                        return insertTrans(myconn, el.payment, el.noinvoice, el.tanggal, el.userin, el.statusid)
-                      })
-                        .then(() => {
                           return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
                         })
                         .then(() => {

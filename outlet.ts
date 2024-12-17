@@ -2510,13 +2510,13 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
             const listPromise = []
             for (let i = 0; i < jumlahLoop; i++) {
               console.log("lihat banyak kali loop: ", i);
-              
+
               const split = listTransaksi.slice((i * 1000), (i * 1000) + 999)
               listPromise.push(new Promise<void>((resolve, reject) => {
                 const hasilProcess = split.map(item => {
                   return new Promise<void>(async (resolve, reject) => {
                     let listDataDet = await cekDetailERP(cdb, myconn, kodeoutlet, item);
-
+                    console.log("lihat listdatadet:", listDataDet)
                     cekDetailERP(cdb, myconn, kodeoutlet, item).then(el => {
                       const idtrans = el._id
                       const isReservasi = el?.isReservasi || false;

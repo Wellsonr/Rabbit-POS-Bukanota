@@ -703,7 +703,244 @@ const getListBarang = (cdb) => {
     }).catch(reject)
   })
 }
+const insertTrans = (conn, payment, listDataDet) => {
+  console.log("Memulai Insert Jurnal")
+  return new Promise<void>((resolveJurnalPOS, rejectJurnalPOS) => {
+    return new Promise<void>((resolveJurnalH, rejectJurnalH) => {
+      const listPromise = listDataDet.map(el => {
+        return new Promise<void>((resolveInsertH, rejectInsertH) => {
+          if (el.statusid === 20) {
+            conn.query('INSERT INTO tbltransh (notrans, tanggal, userin, userupt, jam, jamupt, status, periode, kettrans) VALUE (?,?,?,?,NOW(),NOW(),20,?,\'Penjualan POS\')', [el.kodeorderan, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), el.userin, el.userin, moment(el.tanggal).format('YYYYMM')], (err, results) => {
+              if (err) return rejectInsertH(err);
+              if (results && results.affectedRows > 0) return resolveInsertH();
+              else return rejectInsertH(new Error('Gagal menyimpan header jurnal penjualan POS'));
+            });
+          } else return resolveInsertH();
+        });
+      });
+      Promise
+        .all(listPromise)
+        .then(() => resolveJurnalH())
+        .catch(err => rejectJurnalH(err));
+    })
+      .then(() => {
+        return new Promise<void>((resolveProsesDetail, rejectProsesDetail) => {
+          return new Promise<void>((resolveJurnalD, rejectJurnalD) => {
+            const listPromise = listDataDet.map(el => {
+              return new Promise<void>((resolveInsertJurnalD, rejectInsertJurnalD) => {
 
+                const jurnalKas = new Promise<void>((resolveKas, rejectKas) => {
+                  const kasPromises = payment.flatMap((el) =>
+                    el.payment.map((pay) =>
+                      new Promise<void>((resolve, reject) => {
+                        conn.query(
+                          'SELECT idprdebet FROM tblpayment WHERE kodepayment = ? LIMIT 1',
+                          [pay.kodepayment],
+                          (err, results) => {
+                            if (err) return reject(err);
+                            if (results && results.length > 0) {
+                              const [{ idprdebet }] = results;
+                              const notransreconcile = "";
+
+                              conn.query(
+                                'INSERT INTO tbltransd (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile) VALUES (?,?,20,?,\'IDR\',\'POS Payment\',?,?,\'C\',\'\',1,?,?,\'\',\'\',?);',
+                                [
+                                  el.noinvoice,
+                                  moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'),
+                                  idprdebet,
+                                  el.total,
+                                  el.idcust || "",
+                                  el.noinvoice,
+                                  el.kodegudang || "GEN0001",
+                                  notransreconcile,
+                                ],
+                                (insertErr, insertResults) => {
+                                  if (insertErr) return reject(insertErr);
+                                  if (insertResults && insertResults.affectedRows > 0)
+                                    return resolve();
+                                  else return reject(new Error("Gagal menyimpan jurnal kas"));
+                                }
+                              );
+                            } else {
+                              return reject(new Error("Data Tidak Ditemukan, jurnalKas"));
+                            }
+                          }
+                        );
+                      })
+                    )
+                  );
+
+                  Promise.all(kasPromises)
+                    .then(() => resolveKas())
+                    .catch((err) => rejectKas(err));
+                });
+
+                const jurnalPendapatan = new Promise<void>((resolvePendapatan, rejectPendapatan) => {
+                  const pendapatanPromises = payment.flatMap((el) =>
+                    el.payment.map((pay) =>
+                      new Promise<void>((resolve, reject) => {
+                        conn.query(
+                          'SELECT idprkredit FROM tblpayment WHERE kodepayment = ? LIMIT 1',
+                          [pay.kodepayment],
+                          (err, results) => {
+                            if (err) return reject(err);
+                            if (results && results.length > 0) {
+                              const [{ idprkredit }] = results;
+                              const notransreconcile = "";
+
+                              conn.query(
+                                'INSERT INTO tbltransd (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile) VALUES (?,?,20,?,\'IDR\',\'Sales POS\',?,\'\',\'GJ\',\'\',2,?,?,\'\',\'\',?);',
+                                [
+                                  el.noinvoice,
+                                  moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'),
+                                  idprkredit,
+                                  (el.total - el.serviceAmount - el.taxAmount) * -1,
+                                  el.noinvoice,
+                                  el.kodegudang || "GEN0001",
+                                  notransreconcile,
+                                ],
+                                (insertErr, insertResults) => {
+                                  if (insertErr) return reject(insertErr);
+                                  if (insertResults && insertResults.affectedRows > 0)
+                                    return resolve();
+                                  else return reject(new Error("Gagal menyimpan jurnal pendapatan"));
+                                }
+                              );
+                            } else {
+                              return reject(new Error("Data Tidak Ditemukan, jurnalPendapatan"));
+                            }
+                          }
+                        );
+                      })
+                    )
+                  );
+
+                  Promise.all(pendapatanPromises)
+                    .then(() => resolvePendapatan())
+                    .catch((err) => rejectPendapatan(err));
+                });
+
+                const jurnalService = new Promise<void>((resolveService, rejectService) => {
+                  new Promise((resolveIdprService, rejectIdprService) => {
+                    conn.query('SELECT nilai FROM tblcomp2 WHERE nama = \'prservicespos\' LIMIT 1', (err, results) => {
+                      if (err) return rejectIdprService(err);
+                      if (results && results.length > 0) {
+                        const [{ nilai }] = results;
+                        return resolveIdprService(nilai);
+                      } else return rejectIdprService(new Error('Data Tidak Ditemukan, jurnalService'));
+                    });
+                  })
+                    .then(idprservice => {
+                      return new Promise<void>((resolveInsert, rejectInsert) => {
+                        // const hasReconcile = listJurnalReconcile.find(rc => rc.notrans.trim().toLowerCase() === el.kodeorderan.trim().toLowerCase() && rc.idpr.toString() === idprservice && rc.decs.trim().toLowerCase() === 'service charge' && rc.amount === el.serv * -1);
+                        const notransreconcile = "";
+                        conn.query('INSERT INTO tbltransd (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile) VALUES (?,?,20,?,\'IDR\',\'Service Charge\',?,\'\',\'GJ\',\'\',3,?,?,\'\',\'\',?);', [el.noinvoice, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), idprservice, el.serviceAmount * -1, el.noinvoice, el.kodegudang || "GEN0001", notransreconcile], (err, results) => {
+                          if (err) return rejectInsert(err);
+                          if (results && results.affectedRows > 0) return resolveInsert();
+                          else return rejectInsert(new Error('Gagal menyimpan jurnal kas'));
+                        });
+                      });
+                    })
+                    .then(() => resolveService())
+                    .catch(err => rejectService(err));
+                });
+                const jurnalTax = new Promise<void>((resolveTax, rejectTax) => {
+                  new Promise((resolveIdprTax, rejectIdprTax) => {
+                    conn.query('SELECT nilai FROM tblcomp2 WHERE nama = \'prtaxpos\' LIMIT 1', (err, results) => {
+                      if (err) return rejectIdprTax(err);
+                      if (results && results.length > 0) {
+                        const [{ nilai }] = results;
+                        return resolveIdprTax(nilai);
+                      } else return rejectIdprTax(new Error('Data Tidak Ditemukan, jurnalTax'));
+                    });
+                  })
+                    .then(idprtax => {
+                      return new Promise<void>((resolveInsert, rejectInsert) => {
+                        // const hasReconcile = listJurnalReconcile.find(rc => rc.notrans.trim().toLowerCase() === el.kodeorderan.trim().toLowerCase() && rc.idpr.toString() === idprtax && rc.decs.trim().toLowerCase() === 'tax charge' && rc.amount === el.tax * -1);
+                        const notransreconcile = "";
+                        conn.query('INSERT INTO tbltransd (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile) VALUES (?,?,20,?,\'IDR\',\'Tax Charge\',?,\'\',\'GJ\',\'\',4,?,?,\'\',\'\',?);', [el.noinvoice, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), idprtax, el.taxAmount * -1, el.noinvoice, el.kodegudang || "GEN0001", notransreconcile], (err, results) => {
+                          if (err) return rejectInsert(err);
+                          if (results && results.affectedRows > 0) return resolveInsert();
+                          else return rejectInsert(new Error('Gagal menyimpan jurnal kas'));
+                        });
+                      });
+                    })
+                    .then(() => resolveTax())
+                    .catch(err => rejectTax(err));
+                });
+                const jurnalPersediaan = new Promise<void>((resolvePersediaan, rejectPersediaan) => {
+                  new Promise((resolveIdprPersediaan, rejectIdprPersediaan) => {
+                    conn.query('SELECT nilai FROM tblcomp2 WHERE nama = \'idpersediaan\' LIMIT 1', (err, results) => {
+                      if (err) return rejectIdprPersediaan(err);
+                      if (results && results.length > 0) {
+                        const [{ nilai }] = results;
+                        return resolveIdprPersediaan(nilai);
+                      } else return rejectIdprPersediaan(new Error('Data Tidak Ditemukan, jurnalPersediaan'));
+                    });
+                  })
+                    .then(idpersediaan => {
+                      return new Promise<void>((resolveInsert, rejectInsert) => {
+                        // const hasReconcile = listJurnalReconcile.find(rc => rc.notrans.trim().toLowerCase() === el.kodeorderan.trim().toLowerCase() && rc.idpr.toString() === idpersediaan && rc.decs.trim().toLowerCase() === 'pos inventory' && rc.amount === el.totalpr * -1);
+                        const notransreconcile = "";
+                        conn.query('INSERT INTO tbltransd (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile) VALUES (?,?,20,?,\'IDR\',\'POS Inventory\',?,\'\',\'GJ\',\'\',5,?,?,\'\',\'\',?);', [el.noinvoice, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), idpersediaan, 0, el.noinvoice, el.kodegudang || "GEN0001", notransreconcile], (err, results) => {
+                          if (err) return rejectInsert(err);
+                          if (results && results.affectedRows > 0) return resolveInsert();
+                          else return rejectInsert(new Error('Gagal menyimpan jurnal kas'));
+                        });
+                      });
+                    })
+                    .then(() => resolvePersediaan())
+                    .catch(err => rejectPersediaan(err));
+                });
+                const jurnalHPP = new Promise<void>((resolveHpp, rejectHpp) => {
+                  new Promise((resolveIdprHpp, rejectIdprHpp) => {
+                    conn.query('SELECT nilai FROM tblcomp2 WHERE nama = \'idhpp\' LIMIT 1', (err, results) => {
+                      if (err) return rejectIdprHpp(err);
+                      if (results && results.length > 0) {
+                        const [{ nilai }] = results;
+                        return resolveIdprHpp(nilai);
+                      } else return rejectIdprHpp(new Error('Data Tidak Ditemukan, jurnalHPP'));
+                    });
+                  })
+                    .then(idhpp => {
+                      return new Promise<void>((resolveInsert, rejectInsert) => {
+                        // const hasReconcile = listJurnalReconcile.find(rc => rc.notrans.trim().toLowerCase() === el.kodeorderan.trim().toLowerCase() && rc.idpr.toString() === idhpp && rc.decs.trim().toLowerCase() === 'pos cogs' && rc.amount === el.totalpr);
+                        const notransreconcile = "";
+                        conn.query('INSERT INTO tbltransd (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile) VALUES (?,?,20,?,\'IDR\',\'POS COGS\',?,\'\',\'GJ\',\'\',6,?,?,\'\',\'\',?);', [el.noinvoice, moment(el.tanggal).format('YYYY-MM-DD HH:mm:ss'), idhpp, 0, el.noinvoice, el.kodegudang || "GEN0001", notransreconcile], (err, results) => {
+                          if (err) return rejectInsert(err);
+                          if (results && results.affectedRows > 0) return resolveInsert();
+                          else return rejectInsert(new Error('Gagal menyimpan jurnal kas'));
+                        });
+                      });
+                    })
+                    .then(() => resolveHpp())
+                    .catch(err => rejectHpp(err));
+                });
+                Promise
+                  .all([
+                    jurnalKas,
+                    jurnalPendapatan,
+                    jurnalService,
+                    jurnalTax,
+                    jurnalPersediaan,
+                    jurnalHPP,
+                  ])
+                  .then(() => resolveInsertJurnalD())
+                  .catch(err => rejectInsertJurnalD(err));
+              });
+            });
+            Promise.all(listPromise)
+              .then(() => resolveJurnalD())
+              .catch(err => rejectJurnalD(err));
+          })
+            .then(() => resolveProsesDetail())
+            .catch(err => rejectProsesDetail(err));
+        });
+      })
+      .then(() => resolveJurnalPOS())
+      .catch(err => rejectJurnalPOS(err));
+  });
+};
 const sinkronDBERP = (myconn: Connection): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     const listCheck: Promise<any[]>[] = [];
@@ -2275,7 +2512,9 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
               const split = listTransaksi.slice((i * 1000), (i * 1000) + 999)
               listPromise.push(new Promise<void>((resolve, reject) => {
                 const hasilProcess = split.map(item => {
-                  return new Promise<void>((resolve, reject) => {
+                  return new Promise<void>(async (resolve, reject) => {
+                    let listDataDet = await cekDetailERP(cdb, myconn, kodeoutlet, item);
+
                     cekDetailERP(cdb, myconn, kodeoutlet, item).then(el => {
                       const idtrans = el._id
                       const isReservasi = el?.isReservasi || false;
@@ -2313,6 +2552,8 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                         return processItemERP(myconn, kodeoutlet, el.detail, idtrans, el.noinvoice, listKategori, listSubkategori, listBarang, listTopping)
                       }).then(() => {
                         return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
+                      }).then(() => {
+                        return insertTrans(myconn, el.payment, listDataDet)
                       })
                         .then(() => {
                           return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)

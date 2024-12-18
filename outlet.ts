@@ -712,17 +712,47 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
   if (statusid === 20) {
     await new Promise<void>((resolve, reject) => {
       conn.query(
-        `INSERT INTO tbltransh 
-          (notrans, tanggal, userin, userupt, jam, jamupt, status, periode, kettrans) 
-          VALUE (?,?,?,?,NOW(),NOW(),20,?, 'Penjualan POS')`,
-        [notrans, _tanggal, userin, userin, _tanggal],
+        `SELECT COUNT(*) AS ada FROM tbltransh WHERE notrans = ?`, 
+        [notrans], 
         (err, results) => {
           if (err) return reject(err);
-          if (results?.affectedRows > 0) return resolve();
-          reject(new Error("Gagal menyimpan header jurnal penjualan POS"));
+          if (results && results[0].ada > 0) {
+            conn.query(
+              `DELETE FROM tbltransh WHERE notrans = ?`, 
+              [notrans], 
+              (err, res) => {
+                if (err) return reject(err);
+                if (res && res.affectedRows > 0) {
+                  return resolve();
+                } else {
+                  return reject(new Error(`Gagal menghapus notrans yang telah ada: ${notrans}`));
+                }
+              }
+            );
+          } else {
+            resolve();
+          }
         }
       );
     });
+
+    await new Promise<void>((resolve, reject) => {
+      conn.query(
+        `INSERT INTO tbltransh 
+          (notrans, tanggal, userin, userupt, jam, jamupt, status, periode, kettrans) 
+          VALUES (?, ?, ?, ?, NOW(), NOW(), 20, ?, 'Penjualan POS')`,
+        [notrans, _tanggal, userin, userin, _tanggal],
+        (err, results) => {
+          if (err) return reject(err);
+          if (results?.affectedRows > 0) {
+            return resolve();
+          } else {
+            return reject(new Error("Gagal menyimpan header jurnal penjualan POS"));
+          }
+        }
+      );
+    });
+
     const insertJurnalKas = async () => {
       const kasPromises = payment.flatMap((qt) =>
         qt.payment.map(
@@ -2498,7 +2528,6 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
             const jumlahLoop = Math.ceil(banyakTrans / 1000)
             const listPromise = []
             for (let i = 0; i < jumlahLoop; i++) {
-              console.log("lihat banyak kali loop: ", i);
 
               const split = listTransaksi.slice((i * 1000), (i * 1000) + 999)
               listPromise.push(new Promise<void>((resolve, reject) => {

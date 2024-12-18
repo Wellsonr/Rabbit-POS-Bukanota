@@ -901,20 +901,23 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
       console.error("Error saat menyimpan jurnal:", error);
       throw error;
     }
-  } else if (statusid === 9) {
+  } else if (statusid === 8) {
+    const trimNoInvoice = noinvoice.replace(/^Retur-/, '');
+    const notransRetur = `${trimNoInvoice}-${kodeoutlet}`;
+
     console.log("Proses menghapus Jurnal Transaksi");
-    console.log("lihat notrans: ", notrans);
+    console.log("lihat notrans: ", notransRetur);
 
     const deleteTransH = new Promise<void>((resolve, reject) => {
       conn.query(
         `SELECT COUNT(*) AS ada FROM tbltransh WHERE notrans = ?`,
-        [notrans],
+        [notransRetur],
         (err, results) => {
           if (err) return reject(err);
           if (results && results[0].ada > 0) {
             conn.query(
               `DELETE FROM tbltransh WHERE notrans = ?`,
-              [notrans],
+              [notransRetur],
               (err, res) => {
                 if (err) return reject(err);
                 if (res && res.affectedRows > 0) return resolve();
@@ -931,13 +934,13 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
     const deleteTransD = new Promise<void>((resolve, reject) => {
       conn.query(
         `SELECT COUNT(*) AS ada FROM tbltransd WHERE notrans = ?`,
-        [notrans],
+        [notransRetur],
         (err, results) => {
           if (err) return reject(err);
           if (results && results[0].ada > 0) {
             conn.query(
               `DELETE FROM tbltransd WHERE notrans = ?`,
-              [notrans],
+              [notransRetur],
               (err, res) => {
                 if (err) return reject(err);
                 if (res && res.affectedRows > 0) return resolve();

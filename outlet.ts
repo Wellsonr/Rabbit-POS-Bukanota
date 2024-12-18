@@ -703,13 +703,13 @@ const getListBarang = (cdb) => {
     }).catch(reject)
   })
 }
-const insertTrans = async (conn, payment, noinvoice, tanggal, userin, statusid) => {
+const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin, statusid) => {
   const _tanggal = moment(tanggal).format("YYYY-MM-DD HH:mm:ss");
+  const notrans = `${noinvoice}-${kodeoutlet}`;
 
   if (!payment) return;
 
   console.log("Memulai Insert Jurnal");
-
   // Insert Header
   if (statusid === 20) {
     await new Promise<void>((resolve, reject) => {
@@ -717,7 +717,7 @@ const insertTrans = async (conn, payment, noinvoice, tanggal, userin, statusid) 
         `INSERT INTO tbltransh 
           (notrans, tanggal, userin, userupt, jam, jamupt, status, periode, kettrans) 
           VALUE (?,?,?,?,NOW(),NOW(),20,?, 'Penjualan POS')`,
-        [noinvoice, _tanggal, userin, userin, _tanggal],
+        [notrans, _tanggal, userin, userin, _tanggal],
         (err, results) => {
           if (err) return reject(err);
           if (results?.affectedRows > 0) return resolve();
@@ -725,153 +725,152 @@ const insertTrans = async (conn, payment, noinvoice, tanggal, userin, statusid) 
         }
       );
     });
-  }
-
-  // Insert Detail Journal Promises
-  const insertJurnalKas = async () => {
-    const kasPromises = payment.flatMap((qt) =>
-      qt.payment.map(
-        (pay) =>
-          new Promise<void>((resolve, reject) => {
-            conn.query(
-              `SELECT idprdebet FROM tblpayment WHERE kodepayment = ? LIMIT 1`,
-              [pay.kodepayment],
-              (err, results) => {
-                if (err) return reject(err);
-                if (results?.length > 0) {
-                  const [{ idprdebet }] = results;
-                  conn.query(
-                    `INSERT INTO tbltransd 
-                      (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
-                       jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
-                     VALUES (?, ?, 20, ?, 'IDR', 'POS Payment', ?, ?, 'C', '', 1, ?, 'GEN0001', '', '', ?)`,
-                    [noinvoice, _tanggal, idprdebet, qt.total, "", noinvoice, ""],
-                    (insertErr, insertResults) => {
-                      if (insertErr) return reject(insertErr);
-                      if (insertResults?.affectedRows > 0) return resolve();
-                      reject(new Error("Gagal menyimpan jurnal kas"));
-                    }
-                  );
-                } else reject(new Error("Data Tidak Ditemukan, jurnalKas"));
-              }
-            );
-          })
-      )
-    );
-    await Promise.all(kasPromises);
-  };
-
-  const insertJurnalPendapatan = async () => {
-    const pendapatanPromises = payment.flatMap((qt) =>
-      qt.payment.map(
-        (pay) =>
-          new Promise<void>((resolve, reject) => {
-            conn.query(
-              `SELECT idprkredit FROM tblpayment WHERE kodepayment = ? LIMIT 1`,
-              [pay.kodepayment],
-              (err, results) => {
-                if (err) return reject(err);
-                if (results?.length > 0) {
-                  const [{ idprkredit }] = results;
-                  conn.query(
-                    `INSERT INTO tbltransd 
-                      (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
-                       jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
-                     VALUES (?, ?, 20, ?, 'IDR', 'Sales POS', ?, '', 'GJ', '', 2, ?, 'GEN0001', '', '', ?)`,
-                    [
-                      noinvoice,
-                      _tanggal,
-                      idprkredit,
-                      (qt.total - qt.serviceAmount - qt.taxAmount) * -1,
-                      noinvoice,
-                      "",
-                    ],
-                    (insertErr, insertResults) => {
-                      if (insertErr) return reject(insertErr);
-                      if (insertResults?.affectedRows > 0) return resolve();
-                      reject(new Error("Gagal menyimpan jurnal pendapatan"));
-                    }
-                  );
-                } else reject(new Error("Data Tidak Ditemukan, jurnalPendapatan"));
-              }
-            );
-          })
-      )
-    );
-    await Promise.all(pendapatanPromises);
-  };
-
-  // Service and Tax Journals
-  const fetchIdpr = async (name: string): Promise<number> => {
-    return new Promise((resolve, reject) => {
-      conn.query(
-        `SELECT nilai FROM tblcomp2 WHERE nama = ? LIMIT 1`,
-        [name],
-        (err, results) => {
-          if (err) return reject(err);
-          if (results?.length > 0) return resolve(results[0].nilai);
-          reject(new Error(`Data Tidak Ditemukan, ${name}`));
-        }
+    const insertJurnalKas = async () => {
+      const kasPromises = payment.flatMap((qt) =>
+        qt.payment.map(
+          (pay) =>
+            new Promise<void>((resolve, reject) => {
+              conn.query(
+                `SELECT idprdebet FROM tblpayment WHERE kodepayment = ? LIMIT 1`,
+                [pay.kodepayment],
+                (err, results) => {
+                  if (err) return reject(err);
+                  if (results?.length > 0) {
+                    const [{ idprdebet }] = results;
+                    conn.query(
+                      `INSERT INTO tbltransd 
+                        (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
+                        jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
+                        VALUES (?, ?, 20, ?, 'IDR', 'POS Payment', ?, ?, 'C', '', 1, ?, 'GEN0001', '', '', ?)`,
+                      [notrans, _tanggal, idprdebet, qt.total, "", notrans, ""],
+                      (insertErr, insertResults) => {
+                        if (insertErr) return reject(insertErr);
+                        if (insertResults?.affectedRows > 0) return resolve();
+                        reject(new Error("Gagal menyimpan jurnal kas"));
+                      }
+                    );
+                  } else reject(new Error("Data Tidak Ditemukan, jurnalKas"));
+                }
+              );
+            })
+        )
       );
-    });
-  };
+      await Promise.all(kasPromises);
+    };
 
-  const insertJurnalService = async () => {
-    const idprservice = await fetchIdpr("prservicespos");
-    const servicePromises = payment.map(
-      (qt) =>
-        new Promise<void>((resolve, reject) => {
-          conn.query(
-            `INSERT INTO tbltransd 
-              (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
-               jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
-             VALUES (?, ?, 20, ?, 'IDR', 'Service Charge', ?, '', 'GJ', '', 3, ?, 'GEN0001', '', '', ?)`,
-            [noinvoice, _tanggal, idprservice, qt.serviceAmount * -1, noinvoice, ""],
-            (err, results) => {
-              if (err) return reject(err);
-              if (results?.affectedRows > 0) return resolve();
-              reject(new Error("Gagal menyimpan jurnal service"));
-            }
-          );
-        })
-    );
-    await Promise.all(servicePromises);
-  };
+    const insertJurnalPendapatan = async () => {
+      const pendapatanPromises = payment.flatMap((qt) =>
+        qt.payment.map(
+          (pay) =>
+            new Promise<void>((resolve, reject) => {
+              conn.query(
+                `SELECT idprkredit FROM tblpayment WHERE kodepayment = ? LIMIT 1`,
+                [pay.kodepayment],
+                (err, results) => {
+                  if (err) return reject(err);
+                  if (results?.length > 0) {
+                    const [{ idprkredit }] = results;
+                    conn.query(
+                      `INSERT INTO tbltransd 
+                        (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
+                        jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
+                        VALUES (?, ?, 20, ?, 'IDR', 'Sales POS', ?, '', 'GJ', '', 2, ?, 'GEN0001', '', '', ?)`,
+                      [
+                        notrans,
+                        _tanggal,
+                        idprkredit,
+                        (qt.total - qt.serviceAmount - qt.taxAmount) * -1,
+                        notrans,
+                        "",
+                      ],
+                      (insertErr, insertResults) => {
+                        if (insertErr) return reject(insertErr);
+                        if (insertResults?.affectedRows > 0) return resolve();
+                        reject(new Error("Gagal menyimpan jurnal pendapatan"));
+                      }
+                    );
+                  } else reject(new Error("Data Tidak Ditemukan, jurnalPendapatan"));
+                }
+              );
+            })
+        )
+      );
+      await Promise.all(pendapatanPromises);
+    };
 
-  const insertJurnalTax = async () => {
-    const idprtax = await fetchIdpr("prtaxpos");
-    const taxPromises = payment.map(
-      (qt) =>
-        new Promise<void>((resolve, reject) => {
-          conn.query(
-            `INSERT INTO tbltransd 
-              (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
-               jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
-             VALUES (?, ?, 20, ?, 'IDR', 'Tax Charge', ?, '', 'GJ', '', 4, ?, 'GEN0001', '', '', ?)`,
-            [noinvoice, _tanggal, idprtax, qt.taxAmount * -1, noinvoice, ""],
-            (err, results) => {
-              if (err) return reject(err);
-              if (results?.affectedRows > 0) return resolve();
-              reject(new Error("Gagal menyimpan jurnal tax"));
-            }
-          );
-        })
-    );
-    await Promise.all(taxPromises);
-  };
+    // Service and Tax Journals
+    const fetchIdpr = async (name: string): Promise<number> => {
+      return new Promise((resolve, reject) => {
+        conn.query(
+          `SELECT nilai FROM tblcomp2 WHERE nama = ? LIMIT 1`,
+          [name],
+          (err, results) => {
+            if (err) return reject(err);
+            if (results?.length > 0) return resolve(results[0].nilai);
+            reject(new Error(`Data Tidak Ditemukan, ${name}`));
+          }
+        );
+      });
+    };
 
-  try {
-    await Promise.all([
-      insertJurnalKas(),
-      insertJurnalPendapatan(),
-      insertJurnalService(),
-      insertJurnalTax(),
-    ]);
-    console.log("Semua Jurnal Berhasil Disimpan");
-  } catch (error) {
-    console.error("Error saat menyimpan jurnal:", error);
-    throw error;
+    const insertJurnalService = async () => {
+      const idprservice = await fetchIdpr("prservicespos");
+      const servicePromises = payment.map(
+        (qt) =>
+          new Promise<void>((resolve, reject) => {
+            conn.query(
+              `INSERT INTO tbltransd 
+                (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
+                jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
+                VALUES (?, ?, 20, ?, 'IDR', 'Service Charge', ?, '', 'GJ', '', 3, ?, 'GEN0001', '', '', ?)`,
+              [notrans, _tanggal, idprservice, qt.serviceAmount * -1, notrans, ""],
+              (err, results) => {
+                if (err) return reject(err);
+                if (results?.affectedRows > 0) return resolve();
+                reject(new Error("Gagal menyimpan jurnal service"));
+              }
+            );
+          })
+      );
+      await Promise.all(servicePromises);
+    };
+
+    const insertJurnalTax = async () => {
+      const idprtax = await fetchIdpr("prtaxpos");
+      const taxPromises = payment.map(
+        (qt) =>
+          new Promise<void>((resolve, reject) => {
+            conn.query(
+              `INSERT INTO tbltransd 
+                (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
+                jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
+                VALUES (?, ?, 20, ?, 'IDR', 'Tax Charge', ?, '', 'GJ', '', 4, ?, 'GEN0001', '', '', ?)`,
+              [notrans, _tanggal, idprtax, qt.taxAmount * -1, notrans, ""],
+              (err, results) => {
+                if (err) return reject(err);
+                if (results?.affectedRows > 0) return resolve();
+                reject(new Error("Gagal menyimpan jurnal tax"));
+              }
+            );
+          })
+      );
+      await Promise.all(taxPromises);
+    };
+
+    try {
+      await Promise.all([
+        insertJurnalKas(),
+        insertJurnalPendapatan(),
+        insertJurnalService(),
+        insertJurnalTax(),
+      ]);
+      console.log("Semua Jurnal Berhasil Disimpan");
+    } catch (error) {
+      console.error("Error saat menyimpan jurnal:", error);
+      throw error;
+    }
   }
+
 };
 const sinkronDBERP = (myconn: Connection): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
@@ -2485,6 +2484,9 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                       }).then(() => {
                         return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
                       }).then(() => {
+                        return insertTrans(myconn, kodeoutlet, el.payment, el.noinvoice, el.tanggal, el.userin, el.statusid)
+                      })
+                        .then(() => {
                           return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
                         })
                         .then(() => {

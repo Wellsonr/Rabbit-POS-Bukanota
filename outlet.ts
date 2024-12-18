@@ -712,14 +712,14 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
   if (statusid === 20) {
     await new Promise<void>((resolve, reject) => {
       conn.query(
-        `SELECT COUNT(*) AS ada FROM tbltransh WHERE notrans = ?`, 
-        [notrans], 
+        `SELECT COUNT(*) AS ada FROM tbltransh WHERE notrans = ?`,
+        [notrans],
         (err, results) => {
           if (err) return reject(err);
           if (results && results[0].ada > 0) {
             conn.query(
-              `DELETE FROM tbltransh WHERE notrans = ?`, 
-              [notrans], 
+              `DELETE FROM tbltransh WHERE notrans = ?`,
+              [notrans],
               (err, res) => {
                 if (err) return reject(err);
                 if (res && res.affectedRows > 0) {
@@ -903,6 +903,7 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
     }
   } else if (statusid === 9) {
     console.log("Proses menghapus Jurnal Transaksi");
+    console.log("lihat notrans: ", notrans);
 
     const deleteTransH = new Promise<void>((resolve, reject) => {
       conn.query(

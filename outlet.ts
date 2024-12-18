@@ -708,8 +708,6 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
   const notrans = `${noinvoice}-${kodeoutlet}`;
 
   if (!payment) return;
-
-  console.log("Memulai Insert Jurnal");
   // Insert Header
   if (statusid === 20) {
     await new Promise<void>((resolve, reject) => {
@@ -798,7 +796,7 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
       await Promise.all(pendapatanPromises);
     };
 
-    // Service and Tax Journals
+    // Service && Tax
     const fetchIdpr = async (name: string): Promise<number> => {
       return new Promise((resolve, reject) => {
         conn.query(
@@ -815,45 +813,49 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
 
     const insertJurnalService = async () => {
       const idprservice = await fetchIdpr("prservicespos");
-      const servicePromises = payment.map(
-        (qt) =>
-          new Promise<void>((resolve, reject) => {
-            conn.query(
-              `INSERT INTO tbltransd 
-                (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
-                jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
-                VALUES (?, ?, 20, ?, 'IDR', 'Service Charge', ?, '', 'GJ', '', 3, ?, 'GEN0001', '', '', ?)`,
-              [notrans, _tanggal, idprservice, qt.serviceAmount * -1, notrans, ""],
-              (err, results) => {
-                if (err) return reject(err);
-                if (results?.affectedRows > 0) return resolve();
-                reject(new Error("Gagal menyimpan jurnal service"));
-              }
-            );
-          })
-      );
+      const servicePromises = payment
+        .filter((qt) => qt.serviceAmount !== 0)
+        .map(
+          (qt) =>
+            new Promise<void>((resolve, reject) => {
+              conn.query(
+                `INSERT INTO tbltransd 
+                  (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
+                  jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
+                  VALUES (?, ?, 20, ?, 'IDR', 'Service Charge', ?, '', 'GJ', '', 3, ?, 'GEN0001', '', '', ?)`,
+                [notrans, _tanggal, idprservice, qt.serviceAmount * -1, notrans, ""],
+                (err, results) => {
+                  if (err) return reject(err);
+                  if (results?.affectedRows > 0) return resolve();
+                  reject(new Error("Gagal menyimpan jurnal service"));
+                }
+              );
+            })
+        );
       await Promise.all(servicePromises);
     };
 
     const insertJurnalTax = async () => {
       const idprtax = await fetchIdpr("prtaxpos");
-      const taxPromises = payment.map(
-        (qt) =>
-          new Promise<void>((resolve, reject) => {
-            conn.query(
-              `INSERT INTO tbltransd 
-                (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
-                jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
-                VALUES (?, ?, 20, ?, 'IDR', 'Tax Charge', ?, '', 'GJ', '', 4, ?, 'GEN0001', '', '', ?)`,
-              [notrans, _tanggal, idprtax, qt.taxAmount * -1, notrans, ""],
-              (err, results) => {
-                if (err) return reject(err);
-                if (results?.affectedRows > 0) return resolve();
-                reject(new Error("Gagal menyimpan jurnal tax"));
-              }
-            );
-          })
-      );
+      const taxPromises = payment
+        .filter((qt) => qt.taxAmount !== 0)
+        .map(
+          (qt) =>
+            new Promise<void>((resolve, reject) => {
+              conn.query(
+                `INSERT INTO tbltransd 
+                  (notrans, tanggal, statusid, idpr, ccy, decs, amount, kodeclient, typetrans, 
+                  jenisclient, nobaris, nobukti, kodedevision, eqv, voucher, notransreconcile)
+                  VALUES (?, ?, 20, ?, 'IDR', 'Tax Charge', ?, '', 'GJ', '', 4, ?, 'GEN0001', '', '', ?)`,
+                [notrans, _tanggal, idprtax, qt.taxAmount * -1, notrans, ""],
+                (err, results) => {
+                  if (err) return reject(err);
+                  if (results?.affectedRows > 0) return resolve();
+                  reject(new Error("Gagal menyimpan jurnal tax"));
+                }
+              );
+            })
+        );
       await Promise.all(taxPromises);
     };
 
@@ -867,6 +869,62 @@ const insertTrans = async (conn, kodeoutlet, payment, noinvoice, tanggal, userin
       console.log("Semua Jurnal Berhasil Disimpan");
     } catch (error) {
       console.error("Error saat menyimpan jurnal:", error);
+      throw error;
+    }
+  } else if (statusid === 9) {
+    console.log("Proses menghapus Jurnal Transaksi");
+
+    const deleteTransH = new Promise<void>((resolve, reject) => {
+      conn.query(
+        `SELECT COUNT(*) AS ada FROM tbltransh WHERE notrans = ?`,
+        [notrans],
+        (err, results) => {
+          if (err) return reject(err);
+          if (results && results[0].ada > 0) {
+            conn.query(
+              `DELETE FROM tbltransh WHERE notrans = ?`,
+              [notrans],
+              (err, res) => {
+                if (err) return reject(err);
+                if (res && res.affectedRows > 0) return resolve();
+                reject(new Error("Failed to delete from tbltransh despite rows existing."));
+              }
+            );
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+
+    const deleteTransD = new Promise<void>((resolve, reject) => {
+      conn.query(
+        `SELECT COUNT(*) AS ada FROM tbltransd WHERE notrans = ?`,
+        [notrans],
+        (err, results) => {
+          if (err) return reject(err);
+          if (results && results[0].ada > 0) {
+            conn.query(
+              `DELETE FROM tbltransd WHERE notrans = ?`,
+              [notrans],
+              (err, res) => {
+                if (err) return reject(err);
+                if (res && res.affectedRows > 0) return resolve();
+                reject(new Error("Failed to delete from tbltransd despite rows existing."));
+              }
+            );
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+
+    try {
+      await Promise.all([deleteTransH, deleteTransD]);
+      console.log("Berhasil menghapus tbltransh dan tbltransd.");
+    } catch (error) {
+      console.error("Error deleting:", error);
       throw error;
     }
   }

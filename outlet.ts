@@ -1438,16 +1438,18 @@ const hapusPreviousTrans = (conn: Connection, kodeoutlet: string, idtrans: strin
     })
   })
 }
-const hapusPreviousTransERP = (myconn: Connection, kodeoutlet: string, idtrans: string[]) => {
+const hapusPreviousTransERP = (myconn: Connection, kodeoutlet: string, idtrans: string[], el: any[]) => {  
   return new Promise<void>((resolve, reject) => {
+
     const banyakTrans = idtrans.length
     const jumlahLoop = Math.ceil(banyakTrans / 1000)
     const listPromise = []
     for (let i = 0; i < jumlahLoop; i++) {
+      const notrans = `${el[i].noinvoice}-${kodeoutlet}`;
       const split = idtrans.slice((i * 1000), (i * 1000) + 999)
       // console.log("HASIL SPLIT", i, split)
       listPromise.push(new Promise<void>((resolve, reject) => {
-        myconn.query("DELETE FROM pos_orderan WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanco WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderancod WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderancodpaket WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderand WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderandpaket WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpayment WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpaymentdetail WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpaymentitem WHERE kodeoutlet = ? AND idtrans IN (?)", [kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split], (err) => {
+        myconn.query("DELETE FROM tbltransh WHERE notrans = ?; DELETE FROM tbltransd WHERE notrans = ?; DELETE FROM pos_orderan WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanco WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderancod WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderancodpaket WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderand WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderandpaket WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpayment WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpaymentdetail WHERE kodeoutlet = ? AND idtrans IN (?); DELETE FROM pos_orderanpaymentitem WHERE kodeoutlet = ? AND idtrans IN (?)", [notrans, notrans, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split, kodeoutlet, split], (err) => {
           if (err) return (reject(err))
           return resolve()
         })
@@ -2523,7 +2525,7 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
         }
         myconn.config.timeout = 0
         sinkronDBERP(myconn)
-          .then(() => hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id)))
+          .then(() => hapusPreviousTransERP(myconn, kodeoutlet, listTransaksi.map(el => el._id), listTransaksi.map(el => el)))
           .then(() => {
             const banyakTrans = listTransaksi.length
             const jumlahLoop = Math.ceil(banyakTrans / 1000)
@@ -2573,21 +2575,19 @@ const processTransaksiERP = (mysqlConfig: MysqlInfo, listTransaksi: Transaksi[],
                         return processPaymentERP(myconn, kodeoutlet, el.payment, idtrans, el.noinvoice, listPayment, listBarang, listSubkategori, listTopping)
                       }).then(() => {
                         return insertTrans(myconn, kodeoutlet, el.payment, el.noinvoice, el.tanggal, el.userin, el.statusid)
+                      }).then(() => {
+                        return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
+                      }).then(() => {
+                        return resolve();
+                      }).catch(err => {
+                        console.log("Error", err)
+                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                        const fs = require('fs')
+                        fs.writeFile("D:\\error.txt", JSON.stringify(err), (err2) => {
+                          if (err2) console.log(err2)
+                        })
+                        return reject(err)
                       })
-                        .then(() => {
-                          return processPoin(myconn, kodeoutlet, el.nohp, el.noinvoice, el.payment, el.lastJamBayar)
-                        })
-                        .then(() => {
-                          return resolve();
-                        }).catch(err => {
-                          console.log("Error", err)
-                          // eslint-disable-next-line @typescript-eslint/no-var-requires
-                          const fs = require('fs')
-                          fs.writeFile("D:\\error.txt", JSON.stringify(err), (err2) => {
-                            if (err2) console.log(err2)
-                          })
-                          return reject(err)
-                        })
                     });
                   })
                 })
